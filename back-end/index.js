@@ -7,15 +7,15 @@ import mongoose from 'mongoose';
 import { setupSocketHandlers } from './Lib/ChatHandler.js';
 import { connectdb } from "./Config/db.js";
 import chatRoutes from './Routes/Chatroutes.js';
-import kycRoutes from "./Routes/kycroutes.js";
+import kycRoutes from "./Routes/Kycroutes.js";
 import authRoutes from "./Routes/authRoutes.js";
-import depositRoutes from "./Routes/depositRoutes.js";
-import withdrawalRoutes from "./Routes/withdrawalRoutes.js";
+import depositRoutes from "./Routes/Depositroutes.js";
+import withdrawalRoutes from "./Routes/Withdrawalroutes.js";
 import investmentRoutes  from "./Routes/Investmentroutes.js"
 import transactionRoutes from "./Routes/transactionRoutes.js";
-import adminRoutes       from "./Routes/adminRoutes.js";
+import adminRoutes       from "./Routes/Adminroutes.js";
 import swapRoutes        from "./Routes/swapRoutes.js";
-import transferRoutes    from "./Routes/Transferroutes.js";
+import transferRoutes    from "./Routes/TransactionRoutes.js";
 import referralRoutes    from "./Routes/Referralroutes.js";
 import tradeRoutes       from "./Routes/tradeRoutes.js";
  
