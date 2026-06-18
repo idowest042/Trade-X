@@ -1,6 +1,6 @@
 import Deposit from "../models/Deposit.js";
 import User from "../models/User.js";
-import Transaction from "../models/Transaction.js";
+import Transaction from "../Models/Transaction.js";
 
 const WALLET_ADDRESSES = {
   usdt_trc20: "TY1towm5Sd3SrX1Um6VPs8HRfkm7NprHnK",

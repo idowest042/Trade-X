@@ -1,4 +1,4 @@
-import User from "../models/User.js";
+import User from "../Models/User.js";
 
 // ─── GET /api/referral/my ─────────────────────────────────────────────────────
 export const getMyReferral = async (req, res) => {

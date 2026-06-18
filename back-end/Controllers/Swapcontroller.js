@@ -1,6 +1,6 @@
-import User        from "../models/User.js";
-import Swap        from "../models/Swap.js";
-import Transaction from "../models/Transaction.js";
+import User        from "../Models/User.js";
+import Swap        from "../Models/Swap.js";
+import Transaction from "../Models/Transaction.js";
 
 // ─── Admin-controlled exchange rates (USD-equivalent) ─────────────────────────
 // 1 unit of each currency = X USD

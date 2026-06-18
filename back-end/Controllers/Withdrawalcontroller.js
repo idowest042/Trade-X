@@ -1,7 +1,7 @@
-import Withdrawal from "../models/Withdrawal.js";
-import User from "../models/User.js";
-import Kyc from "../models/Kyc.js";
-import Transaction from "../models/Transaction.js";
+import Withdrawal from "../Models/Withdrawal.js";
+import User from "../Models/User.js";
+import Kyc from "../Models/Kyc.js";
+import Transaction from "../Models/Transaction.js";
 
 const MAX_WITHDRAWAL = 10000;
 const VALID_METHODS  = ["usdt_trc20", "usdt_erc20", "usdt_bep20", "btc", "eth", "sol"];
@@ -163,4 +163,4 @@ export const rejectWithdrawal = async (req, res) => {
     console.error("rejectWithdrawal:", err);
     return res.status(500).json({ message: "Server error." });
   }
-};
+}M

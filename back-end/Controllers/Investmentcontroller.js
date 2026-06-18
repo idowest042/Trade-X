@@ -1,6 +1,6 @@
 import Investment from "../models/Investment.js";
 import User from "../models/User.js";
-import Transaction from "../models/Transaction.js";
+import Transaction from "../Models/Transaction.js";
 
 // ─── Plan config (single source of truth on the backend) ─────────────────────
 const PLAN_CONFIG = {

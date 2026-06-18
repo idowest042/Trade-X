@@ -1,4 +1,4 @@
-import Transaction from "../models/Transaction.js";
+import Transaction from "../Models/Transaction.js";
 
 // ─── GET /api/transactions/my ─────────────────────────────────────────────────
 export const getMyTransactions = async (req, res) => {

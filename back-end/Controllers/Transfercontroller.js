@@ -1,6 +1,6 @@
-import User        from "../models/User.js";
-import Transfer    from "../models/Transfer.js";
-import Transaction from "../models/Transaction.js";
+import User        from "../Models/User.js";
+import Transfer    from "../Models/Transfer.js";
+import Transaction from "../Models/Transaction.js";
 
 // ─── POST /api/transfer ───────────────────────────────────────────────────────
 export const createTransfer = async (req, res) => {
