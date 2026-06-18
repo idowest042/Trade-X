@@ -2,7 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { submitKyc, getMyKyc } from "../controllers/kycController.js";
+import { submitKyc, getMyKyc } from "../controllers/Kyccontroller.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 // ─── Multer storage config ────────────────────────────────────────────────────
