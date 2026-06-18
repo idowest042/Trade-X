@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 import { setupSocketHandlers } from './Lib/ChatHandler.js';
 import { connectdb } from "./Config/db.js";
 import chatRoutes from './Routes/Chatroutes.js';
-import kycRoutes from "./Routes/kycRoutes.js";
+import kycRoutes from "./Routes/kycroutes.js";
 import authRoutes from "./Routes/authRoutes.js";
 import depositRoutes from "./Routes/depositRoutes.js";
 import withdrawalRoutes from "./Routes/withdrawalRoutes.js";
