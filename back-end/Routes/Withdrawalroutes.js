@@ -5,7 +5,7 @@ import {
   getMyWithdrawals,
   approveWithdrawal,
   rejectWithdrawal,
-} from "../controllers/Withdrawalcontroller.js";
+} from "../Controllers/Withdrawalcontroller.js";
 
 const router = Router();
 

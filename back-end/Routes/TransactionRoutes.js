@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { protect, requireRole } from "../middleware/authMiddleware.js";
-import { getMyTransactions, getAllTransactions } from "../controllers/Transactioncontroller.js";
+import { getMyTransactions, getAllTransactions } from "../Controllers/Transactioncontroller.js";
 
 const router = Router();
 

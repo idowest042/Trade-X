@@ -8,7 +8,7 @@ import {
   getMyDeposits,
   approveDeposit,
   rejectDeposit,
-} from "../controllers/Depositcontroller.js";
+} from "../Controllers/Depositcontroller.js";
 import { requireRole } from "../middleware/authMiddleware.js";
 
 // ─── Multer config ────────────────────────────────────────────────────────────
