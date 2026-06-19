@@ -1,7 +1,9 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: 'https://trade-x-4lcn.onrender.com' || "http://localhost:5000",
+ baseURL: process.env.NODE_ENV === 'production' 
+  ? "https://trade-x-4lcn.onrender.com" 
+  : 'http://localhost:5000',
   headers: {
     "Content-Type": "application/json",
   },

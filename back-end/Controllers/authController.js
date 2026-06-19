@@ -105,7 +105,7 @@ export const register = async (req, res) => {
     });
   } catch (error) {
     console.error("Register error:", error);
-    return res.status(500).json({ message: "Server error. Please try again." });
+    return res.status(500).json({ message: `Server error. Please try again.${error.message}` });
   }
 };
 
