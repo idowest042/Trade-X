@@ -14,7 +14,7 @@ import withdrawalRoutes from "./Routes/Withdrawalroutes.js";
 import investmentRoutes  from "./Routes/Investmentroutes.js"
 import transactionRoutes from "./Routes/TransactionRoutes.js";
 import adminRoutes       from "./Routes/Adminroutes.js";
-import swapRoutes        from "./Routes/swapRoutes.js";
+import swapRoutes        from "./Routes/Swaproutes.js";
 import transferRoutes    from "./Routes/Transferroutes.js";
 import referralRoutes    from "./Routes/Referralroutes.js";
 import tradeRoutes       from "./Routes/tradeRoutes.js";
