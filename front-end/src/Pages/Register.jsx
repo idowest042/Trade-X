@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, UserPlus, AlertCircle, CheckCircle2, Zap } from "lucide-react";
 import { toast } from "sonner";
-import useAuthStore from "../stores/useAuthStore";
+import useAuthStore from "../stores/useauthstore";
 import api from "../lib/api";
 
 export default function Register() {
