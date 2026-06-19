@@ -10,7 +10,7 @@ import {
   Info,
 } from "lucide-react";
 import { toast } from "sonner";
-import useAuthStore from "../../stores/useAuthStore";
+import useAuthStore from "../../stores/useauthstore";
 import api from "../../lib/api";
 
 // ─── Constants ────────────────────────────────────────────────────────────────

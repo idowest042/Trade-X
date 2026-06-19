@@ -3,7 +3,7 @@ import { createChart, CandlestickSeries } from "lightweight-charts";
 import { io }        from "socket.io-client";
 import { Activity, DollarSign, AlertCircle, X, TrendingUp, TrendingDown } from "lucide-react";
 import { toast }     from "sonner";
-import useAuthStore  from "../../stores/useAuthStore";
+import useAuthStore from "../../stores/useauthstore";
 import api           from "../../lib/api";
 
 const ASSETS      = ["BTC", "ETH", "SOL", "BNB"];

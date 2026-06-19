@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ArrowLeftRight, ArrowUpDown, Info, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
-import useAuthStore from "../../stores/useAuthStore";
+import useAuthStore from "../../stores/useauthstore";
 import api from "../../lib/api";
 
 const CURRENCIES = ["USD", "USDT", "BTC", "ETH", "SOL", "BNB"];
