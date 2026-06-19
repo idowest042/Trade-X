@@ -4,7 +4,7 @@ import {
   createInvestment,
   getMyInvestments,
   getAllInvestments,
-} from "../Controllers/investmentcontroller.js";
+} from "../Controllers/Investmentcontroller.js";
 
 const router = Router();
 
