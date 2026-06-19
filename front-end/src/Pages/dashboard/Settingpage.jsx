@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { User, Lock, Eye, EyeOff, CheckCircle2, AlertCircle, Save } from "lucide-react";
 import { toast } from "sonner";
-import useAuthStore from "../../stores/useAuthStore";
+import useAuthStore from "../../stores/useauthstore"
 import api from "../../lib/api";
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
