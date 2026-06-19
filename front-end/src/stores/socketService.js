@@ -5,7 +5,7 @@ class SocketService {
     this.socket = null;
   }
 
-  connect(serverUrl = 'http://localhost:5000') {
+  connect(serverUrl = ['http://localhost:5000','https://trade-x-4lcn.onrender.com']) {
     if (this.socket?.connected) {
       console.log('Socket already connected');
       return this.socket;

@@ -16,15 +16,15 @@ import PrivacyPolicy from './Pages/PrivacyPolicy'
 import KycAmlPolicy from './Pages/KycAmlPolicy'
 import RiskDisclosure from './Pages/RiskDisclosure'
 import KycPage from "./Pages/dashboard/KycPage";
-import DepositPage from "./Pages/dashboard/DepositPage";
-import WithdrawPage from "./Pages/dashboard/WithdrawPage";
-import PlansPage from "./Pages/dashboard/PlansPage";
-import MyInvestments  from "./Pages/dashboard/MyInvestments";
-import TransactionsPage from "./Pages/dashboard/TransactionsPage";
-import SwapPage     from "./Pages/dashboard/SwapPage";
-import TransferPage from "./Pages/dashboard/TransferPage";
-import ReferralPage from "./Pages/dashboard/ReferralPage";
-import TradePage        from './Pages/dashboard/TradePage'
+import DepositPage from "./Pages/dashboard/Depositpage";
+import WithdrawPage from "./Pages/dashboard/Withdrawpage";
+import PlansPage from "./Pages/dashboard/Planspage";
+import MyInvestments  from "./Pages/dashboard/Myinvestments";
+import TransactionsPage from "./Pages/dashboard/Transactionspage";
+import SwapPage     from "./Pages/dashboard/Swappage";
+import TransferPage from "./Pages/dashboard/Transferpage";
+import ReferralPage from "./Pages/dashboard/Referralpage";
+import TradePage        from './Pages/dashboard/Tradepage'
 import Settingpage     from './Pages/dashboard/Settingpage'
 
 

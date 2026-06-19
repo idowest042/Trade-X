@@ -28,7 +28,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  origin: ['http://localhost:5173', 'http://localhost:5174','https://tradexfi.com'],
   credentials: true
 }));
 app.use(express.json());
@@ -43,7 +43,7 @@ const httpServer = createServer(app);
 // Initialize Socket.IO
 const io = new Server(httpServer, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    origin: ['http://localhost:5173', 'http://localhost:5174','https://tradexfi.com'],
     methods: ['GET', 'POST'],
     credentials: true
   }
