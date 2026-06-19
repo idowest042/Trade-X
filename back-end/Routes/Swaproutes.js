@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { protect } from "../middleware/authMiddleware.js";
-import { getRates, createSwap, getMySwaps } from "../controllers/swapController.js";
+import { getRates, createSwap, getMySwaps } from "../Controllers/Swapcontroller.js";
 
 const router = Router();
 router.use(protect);
