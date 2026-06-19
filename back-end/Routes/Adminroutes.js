@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { protect, requireRole } from "../middleware/authMiddleware.js";
-import User       from "../models/User.js";
-import Kyc        from "../models/Kyc.js";
-import Deposit    from "../models/Deposit.js";
-import Withdrawal from "../models/Withdrawal.js";
+import User       from "../Models/User.js";
+import Kyc        from "../Models/Kyc.js";
+import Deposit    from "../Models/Deposit.js";
+import Withdrawal from "../Models/Withdrawal.js";
 
 const router = Router();
 
