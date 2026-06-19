@@ -1,5 +1,5 @@
-import Deposit from "../models/Deposit.js";
-import User from "../models/User.js";
+import Deposit from "../Models/Deposit.js";
+import User from "../Models/User.js";
 import Transaction from "../Models/Transaction.js";
 
 const WALLET_ADDRESSES = {

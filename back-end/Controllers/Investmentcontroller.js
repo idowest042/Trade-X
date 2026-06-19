@@ -1,5 +1,5 @@
-import Investment from "../models/Investment.js";
-import User from "../models/User.js";
+import Investment from "../Models/Investment.js";
+import User from "../Models/User.js";
 import Transaction from "../Models/Transaction.js";
 
 // ─── Plan config (single source of truth on the backend) ─────────────────────
