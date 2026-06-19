@@ -163,4 +163,4 @@ export const rejectWithdrawal = async (req, res) => {
     console.error("rejectWithdrawal:", err);
     return res.status(500).json({ message: "Server error." });
   }
-}M
+};
