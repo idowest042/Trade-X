@@ -5,7 +5,14 @@ class SocketService {
     this.socket = null;
   }
 
-  connect(serverUrl = ['http://localhost:5000','https://trade-x-4lcn.onrender.com']) {
+ connect(serverUrl = null) {
+    // Use environment variable or default to localhost
+    const url = serverUrl || 
+                process.env.REACT_APP_SOCKET_URL || 
+                (process.env.NODE_ENV === 'production' 
+                  ? 'https://trade-x-4lcn.onrender.com' 
+                  : 'http://localhost:5000');
+
     if (this.socket?.connected) {
       console.log('Socket already connected');
       return this.socket;
