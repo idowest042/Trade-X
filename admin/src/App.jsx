@@ -9,6 +9,7 @@ import AdminDeposits       from "./pages/AdminDeposits";
 import AdminWithdrawals    from "./pages/AdminWithdrawals";
 import AdminUsers          from "./pages/AdminUsers";
 import AdminTrades         from "./pages/AdminTrades";
+import Home from "./Pages/Home";
 
 const App = () => {
   return (
@@ -38,6 +39,7 @@ const App = () => {
           <Route path="deposits"    element={<AdminDeposits />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="trades"      element={<AdminTrades />} />
+          <Route path="home"      element={<Home />} />
         </Route>
 
         {/* ── / and everything else → /login ───────────────────────────── */}

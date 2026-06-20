@@ -27,13 +27,17 @@ const ChatWidget = () => {
     console.log('Visitor ID initialized:', id);
 
     // Connect to socket
-    const socket = socketService.connect('http://localhost:5000');
-    
+    // Hardcoded fallback: use localhost during local dev, otherwise hit the deployed backend
+    const SOCKET_URL = window.location.hostname === 'localhost'
+      ? 'http://localhost:5000'
+      : 'https://trade-x-4lcn.onrender.com';
+    const socket = socketService.connect(SOCKET_URL);
+
     // Socket connection event handlers
     socket.on('connect', () => {
       console.log('✅ Socket connected');
       setConnected(true);
-      
+
       // Initialize chat session after connection
       console.log('Emitting chat:init with visitorId:', id);
       socket.emit('chat:init', { visitorId: id });
@@ -92,14 +96,14 @@ const ChatWidget = () => {
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    
+
     if (!inputMessage.trim() || !visitorId) {
       console.log('Cannot send: empty message or no visitorId');
       return;
     }
 
     console.log('Sending message:', { visitorId, content: inputMessage.trim() });
-    
+
     socketService.emit('chat:sendMessage', {
       visitorId,
       content: inputMessage.trim()
@@ -111,9 +115,9 @@ const ChatWidget = () => {
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
     const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
