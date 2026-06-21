@@ -1,6 +1,8 @@
 import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { Leaf, TrendingUp, Crown, ArrowRight, Check, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import useAuthStore from '../stores/useauthstore' // Adjust the import path as needed
 
 /**
  * InvestmentPlans Component
@@ -18,6 +20,19 @@ import { Leaf, TrendingUp, Crown, ArrowRight, Check, Sparkles } from 'lucide-rea
 const InvestmentPlans = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const navigate = useNavigate();
+  
+  // Get authentication state from Zustand store
+  const { isAuthenticated } = useAuthStore();
+
+  // Handle invest button click
+  const handleInvestClick = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard/plans');
+    } else {
+      navigate('/register');
+    }
+  };
 
   // Investment plans data
   const plans = [
@@ -269,6 +284,7 @@ const InvestmentPlans = () => {
 
                   {/* CTA Button */}
                   <motion.button
+                    onClick={handleInvestClick}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className={`w-full group/btn inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-base transition-all duration-300 ${

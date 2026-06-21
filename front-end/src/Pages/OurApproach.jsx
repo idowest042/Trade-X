@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
+import { Link } from "react-router-dom"; // Added this import
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
@@ -451,12 +452,14 @@ export default function OurApproach() {
                 </p>
               </FadeIn>
               <FadeIn delay={0.22}>
-                <button className="inline-flex items-center gap-2.5 bg-blue-600 text-white text-sm font-semibold 
-                  px-7 py-3.5 rounded-xl hover:bg-blue-700 active:scale-95 
-                  transition-all duration-200 tracking-wide shadow-md hover:shadow-lg">
-                  View Investment Plans
-                  <IconArrowRight />
-                </button>
+                <Link to="/pricing">
+                  <button className="inline-flex items-center gap-2.5 bg-blue-600 text-white text-sm font-semibold 
+                    px-7 py-3.5 rounded-xl hover:bg-blue-700 active:scale-95 
+                    transition-all duration-200 tracking-wide shadow-md hover:shadow-lg">
+                    View Investment Plans
+                    <IconArrowRight />
+                  </button>
+                </Link>
               </FadeIn>
             </div>
           </div>

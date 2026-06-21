@@ -26,7 +26,7 @@ import TransferPage from "./Pages/dashboard/Transferpage";
 import ReferralPage from "./Pages/dashboard/Referralpage";
 import TradePage        from './Pages/dashboard/Tradepage'
 import Settingpage     from './Pages/dashboard/Settingpage'
-
+import NotFound from './Pages/NotFound'
 
 // Auth pages
 import Login from './Pages/Login'
@@ -65,6 +65,7 @@ const App = () => {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/kyc" element={<KycAmlPolicy />} />
         <Route path="/risk" element={<RiskDisclosure />} />
+          <Route path="*" element={<NotFound />} />
 
         {/* ── Auth routes ──────────────────────────────────────────────── */}
         <Route path="/login" element={<Login />} />

@@ -6,8 +6,8 @@ const Footer = () => {
 
   const companyLinks = [
     { label: 'About Us', href: '/about' },
-    { label: 'How It Works', href: '#how-it-works' },
-    { label: 'Investment Plans', href: '#/lans' },
+    { label: 'How It Works', href: '/how-it-works' },
+    { label: 'Investment Plans', href: '/pricing' },
     { label: 'FAQ', href: '/faq' }
   ];
 

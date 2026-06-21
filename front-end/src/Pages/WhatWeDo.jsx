@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Link } from "react-router-dom"; // Added this import
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer"
 
@@ -444,11 +445,13 @@ export default function WhatWeDo() {
               </Reveal>
 
               <Reveal delay={220}>
-                <button className="inline-flex items-center gap-2.5 bg-blue-600 text-white text-sm font-semibold
-                  px-7 py-3.5 rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 tracking-wide">
-                  Learn How It Works
-                  <IconArrowRight />
-                </button>
+                <Link to="/how-it-works">
+                  <button className="inline-flex items-center gap-2.5 bg-blue-600 text-white text-sm font-semibold
+                    px-7 py-3.5 rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 tracking-wide">
+                    Learn How It Works
+                    <IconArrowRight />
+                  </button>
+                </Link>
               </Reveal>
 
             </div>

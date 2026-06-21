@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import { motion, useInView } from "framer-motion";
+import { useNavigate } from "react-router-dom"; // Added this import
+import useAuthStore from "../stores/useauthstore"; // Added this import
 import {
   TrendingUp,
   Shield,
@@ -114,12 +116,29 @@ const features = [
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 export default function Pricing() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
+  
   const [calculatorAmount, setCalculatorAmount] = useState(500);
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(1); // Growth Plan default
 
   const selectedPlan = plans[selectedPlanIndex];
   const weeklyProfit = (calculatorAmount * selectedPlan.returnValue) / 100;
   const monthlyProfit = weeklyProfit * 4;
+
+  // Handle invest button click
+  const handleInvestClick = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard/plans');
+    } else {
+      navigate('/register');
+    }
+  };
+
+  // Handle contact support click
+  const handleContactSupport = () => {
+    navigate('/');
+  };
 
   return (
     <>
@@ -206,12 +225,14 @@ export default function Pricing() {
                     </div>
 
                     {/* Invest Button */}
-                    <button className={`w-full py-3.5 rounded-xl font-semibold text-sm
-                      transition-all duration-200 active:scale-95
-                      ${plan.highlighted
-                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
-                        : 'bg-gray-900 text-white hover:bg-gray-800'
-                      }`}
+                    <button 
+                      onClick={handleInvestClick}
+                      className={`w-full py-3.5 rounded-xl font-semibold text-sm
+                        transition-all duration-200 active:scale-95
+                        ${plan.highlighted
+                          ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
+                          : 'bg-gray-900 text-white hover:bg-gray-800'
+                        }`}
                     >
                       Invest Now
                     </button>
@@ -382,13 +403,17 @@ export default function Pricing() {
               </FadeIn>
               <FadeIn delay={0.16}>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white 
+                  <button 
+                    onClick={handleInvestClick}
+                    className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white 
                     text-sm font-semibold px-7 py-3.5 rounded-xl hover:bg-blue-700 
                     active:scale-95 transition-all duration-200 tracking-wide shadow-md hover:shadow-lg">
                     Invest Now
                     <ArrowRight className="w-4 h-4" />
                   </button>
-                  <button className="inline-flex items-center justify-center gap-2 bg-white text-blue-600 
+                  <button 
+                    onClick={handleContactSupport}
+                    className="inline-flex items-center justify-center gap-2 bg-white text-blue-600 
                     border border-blue-200 text-sm font-semibold px-7 py-3.5 rounded-xl 
                     hover:bg-blue-50 hover:border-blue-300 active:scale-95 
                     transition-all duration-200 tracking-wide shadow-sm hover:shadow-md">

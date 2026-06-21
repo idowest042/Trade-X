@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom'; // Add this import
 import { 
   TrendingUp, 
   Shield, 
@@ -154,23 +155,27 @@ const Hero = () => {
             variants={itemVariants}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
           >
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="group px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/30 flex items-center text-lg w-full sm:w-auto justify-center"
-            >
-              Start Investing
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </motion.button>
+            <Link to="/register">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="group px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/30 flex items-center text-lg w-full sm:w-auto justify-center"
+              >
+                Start Trading
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </motion.button>
+            </Link>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="px-8 py-4 bg-white text-gray-700 font-semibold rounded-lg border-2 border-gray-300 hover:border-blue-600 hover:text-blue-600 transition-colors shadow-sm flex items-center text-lg w-full sm:w-auto justify-center"
-            >
-              How It Works
-              <TrendingUp className="ml-2 w-5 h-5" />
-            </motion.button>
+            <Link to="/learn">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-8 py-4 bg-white text-gray-700 font-semibold rounded-lg border-2 border-gray-300 hover:border-blue-600 hover:text-blue-600 transition-colors shadow-sm flex items-center text-lg w-full sm:w-auto justify-center"
+              >
+                Learn More
+                <TrendingUp className="ml-2 w-5 h-5" />
+              </motion.button>
+            </Link>
           </motion.div>
 
           {/* Trust indicators */}

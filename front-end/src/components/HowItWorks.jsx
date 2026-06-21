@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { UserPlus, Wallet, TrendingUp, ArrowRight, Sparkles } from 'lucide-react';
-
+import {Link} from "react-router-dom"
 /**
  * HowItWorks Component
  * 
@@ -199,23 +199,20 @@ const HowItWorks = () => {
               </div>
             </motion.div>
           ))}
-        </motion.div>
+        </motion.div> {/* <-- This closing tag was missing */}
 
         {/* Call to Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.8, duration: 0.6 }}
-          className="text-center"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-            className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold text-lg rounded-xl shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 transition-all duration-300"
-          >
-            Start Investing
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-          </motion.button>
+        <div className="flex flex-col items-center justify-center gap-6">
+          <Link to="/register">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="group px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/30 flex items-center text-lg w-full sm:w-auto justify-center"
+            >
+              Start Trading
+              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </motion.button>
+          </Link>
 
           {/* Trust indicators below CTA */}
           <div className="mt-8 flex items-center justify-center gap-8 text-sm text-slate-500">
@@ -238,7 +235,7 @@ const HowItWorks = () => {
               <span className="font-medium">24/7 support</span>
             </div>
           </div>
-        </motion.div>
+        </div>
 
       </div>
     </section>

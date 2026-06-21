@@ -10,12 +10,13 @@ import {
   Wallet,
   LogOut 
 } from 'lucide-react';
+import useAuthStore from '../stores/useauthstore';
 
 const Navbar = () => {
   const navigate = useNavigate();
   
-  // Mock authentication state - Replace with zustand store later
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Get authentication state from Zustand store
+  const { user, isAuthenticated, logout } = useAuthStore();
   
   // State management
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -97,7 +98,7 @@ const Navbar = () => {
   // User dropdown items
   const userMenuItems = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'Deposit', path: '/deposit', icon: Wallet },
+    { label: 'Deposit', path: '/dashboard/deposit', icon: Wallet },
   ];
 
   // Handlers
@@ -112,8 +113,7 @@ const Navbar = () => {
   };
 
   const handleLogout = () => {
-    // Placeholder - will call backend API later
-    setIsAuthenticated(false);
+    logout(); // Call logout from Zustand store
     setIsUserDropdownOpen(false);
     navigate('/');
   };
@@ -151,6 +151,28 @@ const Navbar = () => {
   const overlayVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1 }
+  };
+
+  // Get user's display name
+  const getDisplayName = () => {
+    if (user?.name) {
+      // If name is a full name, get first name
+      const firstName = user.name.split(' ')[0];
+      return firstName;
+    }
+    return 'User';
+  };
+
+  // Get user's initials for avatar
+  const getUserInitials = () => {
+    if (user?.name) {
+      const names = user.name.split(' ');
+      if (names.length >= 2) {
+        return `${names[0][0]}${names[1][0]}`.toUpperCase();
+      }
+      return names[0][0].toUpperCase();
+    }
+    return 'U';
   };
 
   return (
@@ -241,18 +263,28 @@ const Navbar = () => {
               ) : (
                 <>
                   <Link
-                    to="/invest"
+                    to="/dashboard/trade"
                     className="px-6 py-2.5 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors shadow-sm"
                   >
-                    Invest
+                    Trade
                   </Link>
                   
                   <div className="relative" ref={userDropdownRef}>
                     <button
                       onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                      className="flex items-center justify-center w-10 h-10 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 transition-colors"
                     >
-                      <User className="h-5 w-5" />
+                      <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                        {getUserInitials()}
+                      </div>
+                      <span className="font-medium text-sm max-w-[80px] truncate">
+                        {getDisplayName()}
+                      </span>
+                      <ChevronDown 
+                        className={`h-4 w-4 transition-transform duration-200 ${
+                          isUserDropdownOpen ? 'rotate-180' : ''
+                        }`} 
+                      />
                     </button>
 
                     <AnimatePresence>
@@ -264,6 +296,16 @@ const Navbar = () => {
                           exit="exit"
                           className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2"
                         >
+                          {/* User info at top of dropdown */}
+                          <div className="px-4 py-3 border-b border-gray-200">
+                            <p className="text-sm font-semibold text-gray-900 truncate">
+                              {user?.name || 'User'}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {user?.email || ''}
+                            </p>
+                          </div>
+                          
                           {userMenuItems.map((item, idx) => (
                             <button
                               key={idx}
@@ -434,6 +476,16 @@ const Navbar = () => {
                   </div>
                 ) : (
                   <div className="space-y-1">
+                    {/* User info in mobile menu */}
+                    <div className="px-4 py-3 bg-gray-50 rounded-md mb-3">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {user?.name || 'User'}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {user?.email || ''}
+                      </p>
+                    </div>
+                    
                     {userMenuItems.map((item, idx) => (
                       <button
                         key={idx}

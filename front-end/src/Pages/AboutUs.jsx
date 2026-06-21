@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { motion, useInView } from "framer-motion";
+import { Link } from "react-router-dom"; // Added this import
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer"
 
@@ -350,21 +351,23 @@ export default function AboutUs() {
                 TradeX is built with a long-term vision, prioritizing trust, compliance, and user
                 experience at every step.
               </p>
-              <button
-                className="inline-flex items-center gap-2 bg-blue-600 text-white text-sm font-semibold px-7 py-3.5 rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 tracking-wide"
-              >
-                Explore Investment Plans
-                <svg
-                  viewBox="0 0 20 20" fill="currentColor"
-                  className="w-4 h-4"
+              <Link to="/pricing">
+                <button
+                  className="inline-flex items-center gap-2 bg-blue-600 text-white text-sm font-semibold px-7 py-3.5 rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 tracking-wide"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
+                  Explore Investment Plans
+                  <svg
+                    viewBox="0 0 20 20" fill="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </Link>
             </div>
           </FadeIn>
         </div>

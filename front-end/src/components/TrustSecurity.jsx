@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { ShieldCheck, Lock, FileCheck, Eye, ArrowRight, Shield } from 'lucide-react';
+import { Link } from 'react-router-dom'; // Added this import
 
 /**
  * TrustSecurity Component
@@ -134,14 +135,16 @@ const TrustSecurity = () => {
             </p>
 
             {/* Call to action */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.98 }}
-              className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-600/85 text-white font-semibold text-lg rounded-xl shadow-lg shadow-green-600/30 hover:shadow-xl hover:shadow-green-600/40 transition-all duration-300"
-            >
-              Invest with Confidence
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-            </motion.button>
+            <Link to="/how-it-works">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+                className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-600/85 text-white font-semibold text-lg rounded-xl shadow-lg shadow-green-600/30 hover:shadow-xl hover:shadow-green-600/40 transition-all duration-300"
+              >
+                Invest with Confidence
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+              </motion.button>
+            </Link>
 
             {/* Trust stats (optional subtle detail) */}
             <div className="mt-10 pt-10 border-t border-slate-200">

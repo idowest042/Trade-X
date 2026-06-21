@@ -1,5 +1,7 @@
 import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
+import { useNavigate } from 'react-router-dom'; // Added this import
+import useAuthStore from '../stores/useauthstore'; // Added this import
 import { 
   BookOpen, 
   TrendingUp, 
@@ -39,6 +41,9 @@ import Footer from '../components/Footer';
  */
 
 const Learn = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
+
   // Refs for scroll animations
   const pathsRef = useRef(null);
   const guidesRef = useRef(null);
@@ -70,6 +75,24 @@ const Learn = () => {
         staggerChildren: 0.1,
         delayChildren: 0.1
       }
+    }
+  };
+
+  // Handle trade button click
+  const handleStartTrading = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard/trade');
+    } else {
+      navigate('/register');
+    }
+  };
+
+  // Handle invest button click
+  const handleInvestNow = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard/plans');
+    } else {
+      navigate('/register');
     }
   };
 
@@ -239,6 +262,7 @@ const Learn = () => {
             {/* Dual CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <motion.button
+                onClick={handleStartTrading}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
                 className="group inline-flex items-center gap-2 px-8 py-4 bg-blue-600 text-white font-semibold text-lg rounded-xl shadow-lg hover:bg-blue-700 transition-colors duration-300"
@@ -248,6 +272,7 @@ const Learn = () => {
               </motion.button>
               
               <motion.button
+                onClick={handleInvestNow}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
                 className="group inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 font-semibold text-lg rounded-xl border-2 border-blue-600 hover:bg-blue-50 transition-colors duration-300"
@@ -540,6 +565,7 @@ const Learn = () => {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <motion.button
+                onClick={handleStartTrading}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
                 className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
@@ -549,6 +575,7 @@ const Learn = () => {
               </motion.button>
               
               <motion.button
+                onClick={handleInvestNow}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
                 className="inline-flex items-center gap-2 px-8 py-4 bg-green-500 text-white font-semibold text-lg rounded-xl shadow-lg hover:bg-green-600 transition-colors duration-300"
