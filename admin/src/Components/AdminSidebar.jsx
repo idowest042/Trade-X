@@ -6,7 +6,7 @@ import {
   Menu, X
 } from "lucide-react";
 import { toast } from "sonner";
-import useAdminStore from "../store/useAdminStore";
+import useAdminStore from "../Store/useAdminStore";
 
 const NAV = [
   { to: "/admin",             label: "Dashboard",   icon: LayoutDashboard, end: true },

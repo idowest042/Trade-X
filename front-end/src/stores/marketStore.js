@@ -7,11 +7,11 @@ import { axiosInstance } from '../lib/axios'; // Use centralized axios instance
  * Prevents the 4-10 second blank state on page load
  */
 const MOCK_CRYPTO_DATA = [
-  { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', price: 43250.00, change24h: 2.45, image: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png' },
-  { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', price: 2580.50, change24h: 1.85, image: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png' },
+  { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', price: 62371.25, change24h: 2.45, image: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png' },
+  { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', price: 1653.92, change24h: 1.85, image: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png' },
   { id: 'tether', symbol: 'USDT', name: 'Tether', price: 1.00, change24h: 0.01, image: 'https://assets.coingecko.com/coins/images/325/small/Tether.png' },
-  { id: 'binancecoin', symbol: 'BNB', name: 'BNB', price: 315.20, change24h: -0.85, image: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png' },
-  { id: 'solana', symbol: 'SOL', name: 'Solana', price: 105.75, change24h: 4.20, image: 'https://assets.coingecko.com/coins/images/4128/small/solana.png' },
+  { id: 'binancecoin', symbol: 'BNB', name: 'BNB', price: 573.44, change24h: -0.85, image: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png' },
+  { id: 'solana', symbol: 'SOL', name: 'Solana', price: 68.75, change24h: 4.20, image: 'https://assets.coingecko.com/coins/images/4128/small/solana.png' },
   { id: 'ripple', symbol: 'XRP', name: 'XRP', price: 0.58, change24h: 1.25, image: 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png' },
   { id: 'usd-coin', symbol: 'USDC', name: 'USDC', price: 1.00, change24h: 0.00, image: 'https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png' },
   { id: 'cardano', symbol: 'ADA', name: 'Cardano', price: 0.52, change24h: 2.15, image: 'https://assets.coingecko.com/coins/images/975/small/cardano.png' },
