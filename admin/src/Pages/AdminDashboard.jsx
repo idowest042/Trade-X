@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Users, ShieldCheck, ArrowDownToLine, ArrowUpFromLine, Clock } from "lucide-react";
-import { StatCard, PageHeader, fmt } from "../components/AdminUI";
+import { StatCard, PageHeader, fmt } from "../Components/AdminUI";
 import api from "../lib/api";
 
 export default function AdminDashboard() {

@@ -92,25 +92,43 @@ export const setupSocketHandlers = (io) => {
           message: userMessage
         });
 
-        // Send email notification to admin
-        console.log('📧 Sending email notification...');
-        await emailService.sendNewMessageNotification(visitorId, content);
+        // ✅ FIX: Don't block the request on the email send. Gmail SMTP
+        // (or any provider) can take many seconds to respond, and awaiting
+        // it here was delaying everything below it — including the
+        // auto-reply timer — by however long the email took to send.
+        // Fire-and-forget: log failures, but never let email latency
+        // hold up the realtime chat flow.
+        console.log('📧 Sending email notification (non-blocking)...');
+        emailService.sendNewMessageNotification(visitorId, content)
+          .catch((err) => console.error('❌ Email notification failed:', err));
 
         // ✅ FIX: Only send auto-reply if admin hasn't responded yet
         const hasAdminReplied = session.metadata?.hasAdminReplied || false;
-        
-        if (!hasAdminReplied) {
-          console.log('📤 Sending auto-reply (admin has not responded yet)');
-          setTimeout(async () => {
-            const autoReply = await Message.create({
-              sessionId: session._id,
-              visitorId,
-              sender: 'system',
-              content: 'Thanks for reaching out. A support agent will respond within a few minutes.'
-            });
 
-            console.log('📤 Auto-reply sent:', autoReply._id);
-            socket.emit('chat:autoReply', autoReply);
+        if (!hasAdminReplied) {
+          console.log('📤 Scheduling auto-reply (admin has not responded yet)');
+          setTimeout(async () => {
+            try {
+              const autoReply = await Message.create({
+                sessionId: session._id,
+                visitorId,
+                sender: 'system',
+                content: 'Thanks for reaching out. A support agent will respond within a few minutes.'
+              });
+
+              console.log('📤 Auto-reply sent:', autoReply._id);
+
+              // Guard against a dropped connection in the 1s window
+              // (e.g. mobile user closed the tab) — emitting on a
+              // disconnected socket would otherwise throw/silently fail.
+              if (socket.connected) {
+                socket.emit('chat:autoReply', autoReply);
+              } else {
+                console.log('⏭️  Socket disconnected before auto-reply could be delivered (message still saved)');
+              }
+            } catch (err) {
+              console.error('❌ Error creating/sending auto-reply:', err);
+            }
           }, 1000);
         } else {
           console.log('⏭️  Skipping auto-reply (admin has already responded)');

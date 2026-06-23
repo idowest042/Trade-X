@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom'; // Add this import
+import { Link, useNavigate } from 'react-router-dom'; // Added useNavigate
+import useAuthStore from '../stores/useauthstore'; // Added this import
 import { 
   TrendingUp, 
   Shield, 
@@ -13,6 +14,18 @@ import {
 } from 'lucide-react';
 
 const Hero = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
+
+  // Handle Start Trading button click
+  const handleStartTrading = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard/trade');
+    } else {
+      navigate('/register');
+    }
+  };
+
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -155,16 +168,15 @@ const Hero = () => {
             variants={itemVariants}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
           >
-            <Link to="/register">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="group px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/30 flex items-center text-lg w-full sm:w-auto justify-center"
-              >
-                Start Trading
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </motion.button>
-            </Link>
+            <motion.button
+              onClick={handleStartTrading}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="group px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/30 flex items-center text-lg w-full sm:w-auto justify-center"
+            >
+              Start Trading
+              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </motion.button>
 
             <Link to="/learn">
               <motion.button

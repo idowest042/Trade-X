@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ExternalLink } from "lucide-react";
-import { PageHeader, StatusBadge, Table, ActionBtn, StatCard, fmt } from "../components/AdminUI";
+import { PageHeader, StatusBadge, Table, ActionBtn, StatCard, fmt } from "../Components/AdminUI";
 import api from "../lib/api";
 
 const METHOD_LABELS = {

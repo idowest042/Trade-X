@@ -1,15 +1,15 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
-import AdminProtectedRoute from "./components/AdminProtectedRoute";
+import AdminProtectedRoute from "./Components/AdminProtectedRoute";
 import AdminLayout         from "./layout/AdminLayout";
-import AdminLogin          from "./pages/AdminLogin";
-import AdminDashboard      from "./pages/AdminDashboard";
-import AdminKYC            from "./pages/AdminKYC";
-import AdminDeposits       from "./pages/AdminDeposits";
-import AdminWithdrawals    from "./pages/AdminWithdrawals";
-import AdminUsers          from "./pages/AdminUsers";
-import AdminTrades         from "./pages/AdminTrades";
-import Home from "./Pages/Home";
+import AdminLogin          from "./Pages/AdminLogin";
+import AdminDashboard      from "./Pages/AdminDashboard";
+import AdminKYC            from "./Pages/AdminKYC";
+import AdminDeposits       from "./Pages/AdminDeposits";
+import AdminWithdrawals    from "./Pages/AdminWithdrawals";
+import AdminUsers          from "./Pages/AdminUsers";
+import AdminTrades         from "./Pages/AdminTrades";
+import AdminMessages from "./Pages/Home";
 
 const App = () => {
   return (
@@ -39,7 +39,7 @@ const App = () => {
           <Route path="deposits"    element={<AdminDeposits />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="trades"      element={<AdminTrades />} />
-          <Route path="home"      element={<Home />} />
+          <Route path="messages" element={<AdminMessages />} />
         </Route>
 
         {/* ── / and everything else → /login ───────────────────────────── */}

@@ -158,6 +158,7 @@ export const getMarketPrices = async (req, res) => {
         success: true,
         data: priceCache.data,
         cached: true,
+        isFallback: !!priceCache.data?.[0]?.isFallback,
         timestamp: priceCache.timestamp
       });
     }
@@ -170,6 +171,7 @@ export const getMarketPrices = async (req, res) => {
     console.log('🔄 Fetching fresh prices from CoinGecko');
     const coinGeckoData = await ongoingRequest;
     const normalizedData = normalizePriceData(coinGeckoData);
+    const isFallback = normalizedData.some(coin => coin.isFallback);
 
     priceCache = {
       ...priceCache,
@@ -177,10 +179,14 @@ export const getMarketPrices = async (req, res) => {
       timestamp: Date.now()
     };
 
+    // ✅ FIX: Tell the frontend explicitly when this is placeholder data
+    // (price: 0, image: null) rather than real CoinGecko prices, so the
+    // UI can choose to keep showing mock data instead of zeros.
     res.status(200).json({
       success: true,
       data: normalizedData,
       cached: false,
+      isFallback,
       timestamp: priceCache.timestamp
     });
 
@@ -200,6 +206,7 @@ export const getMarketPrices = async (req, res) => {
         data: priceCache.data,
         cached: true,
         stale: true,
+        isFallback: !!priceCache.data?.[0]?.isFallback,
         timestamp: priceCache.timestamp
       });
     }
