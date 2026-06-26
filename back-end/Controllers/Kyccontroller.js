@@ -1,17 +1,29 @@
 import Kyc from "../Models/Kyc.js";
 import User from "../Models/User.js";
+import cloudinary from "../Config/cloudinary.js"; // ⚠️ confirm folder casing matches your actual file tree
+
+// Helper: upload a buffer (from multer memoryStorage) to Cloudinary
+const uploadBufferToCloudinary = (buffer, folder) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder, resource_type: "auto" },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+};
 
 // ─── @route  POST /api/kyc/submit ─────────────────────────────────────────────
 export const submitKyc = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // 1. Check for existing submission
     const existing = await Kyc.findOne({ userId });
     if (existing) {
-      // Allow resubmission only if previously rejected
       if (existing.status === "rejected") {
-        // Update the existing record instead of creating a new one
         const {
           firstName, lastName, dob, nationality, socialLink,
           addressLine, city, state, country, documentType,
@@ -21,6 +33,12 @@ export const submitKyc = async (req, res) => {
         if (!files?.frontImage?.[0] || !files?.backImage?.[0]) {
           return res.status(400).json({ message: "Both front and back document images are required." });
         }
+
+        // Upload both buffers to Cloudinary in parallel
+        const [frontUrl, backUrl] = await Promise.all([
+          uploadBufferToCloudinary(files.frontImage[0].buffer, "kyc"),
+          uploadBufferToCloudinary(files.backImage[0].buffer, "kyc"),
+        ]);
 
         existing.firstName   = firstName?.trim();
         existing.lastName    = lastName?.trim();
@@ -32,8 +50,8 @@ export const submitKyc = async (req, res) => {
         existing.state       = state?.trim();
         existing.country     = country?.trim();
         existing.documentType = documentType;
-        existing.frontImage  = files.frontImage[0].path;
-        existing.backImage   = files.backImage[0].path;
+        existing.frontImage  = frontUrl;
+        existing.backImage   = backUrl;
         existing.status      = "pending";
         existing.rejectionReason = "";
         existing.reviewedAt  = null;
@@ -46,7 +64,6 @@ export const submitKyc = async (req, res) => {
         });
       }
 
-      // Pending or approved — block resubmission
       return res.status(409).json({
         message:
           existing.status === "approved"
@@ -55,7 +72,6 @@ export const submitKyc = async (req, res) => {
       });
     }
 
-    // 2. Validate required fields
     const {
       firstName, lastName, dob, nationality, socialLink,
       addressLine, city, state, country, documentType,
@@ -68,13 +84,17 @@ export const submitKyc = async (req, res) => {
       return res.status(400).json({ message: "All required fields must be provided." });
     }
 
-    // 3. Validate uploaded files
     const files = req.files;
     if (!files?.frontImage?.[0] || !files?.backImage?.[0]) {
       return res.status(400).json({ message: "Both front and back document images are required." });
     }
 
-    // 4. Create KYC record
+    // Upload both buffers to Cloudinary in parallel
+    const [frontUrl, backUrl] = await Promise.all([
+      uploadBufferToCloudinary(files.frontImage[0].buffer, "kyc"),
+      uploadBufferToCloudinary(files.backImage[0].buffer, "kyc"),
+    ]);
+
     const kyc = await Kyc.create({
       userId,
       firstName:   firstName.trim(),
@@ -87,8 +107,8 @@ export const submitKyc = async (req, res) => {
       state:       state.trim(),
       country:     country.trim(),
       documentType,
-      frontImage:  files.frontImage[0].path,
-      backImage:   files.backImage[0].path,
+      frontImage:  frontUrl,
+      backImage:   backUrl,
       status:      "pending",
     });
 

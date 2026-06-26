@@ -7,7 +7,7 @@ import useAuthStore from "../../stores/useauthstore";
 import api           from "../../lib/api";
 
 const ASSETS      = ["BTC", "ETH", "SOL", "BNB"];
-const API_URL     = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL     = "https://trade-x-4lcn.onrender.com" || "http://localhost:5000";
 const ASSET_COLOR = { BTC: "#f97316", ETH: "#6366f1", SOL: "#a855f7", BNB: "#eab308" };
 
 // ─── PnL chip ─────────────────────────────────────────────────────────────────
@@ -271,7 +271,7 @@ export default function TradePage() {
               Live Trading
             </h1>
             <p className="text-sm text-slate-500 mt-0.5" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-              Simulated market · candles update every 2 seconds automatically.
+              Live market · candles update every 2 seconds automatically.
             </p>
           </div>
           <div className="flex items-center gap-2.5">

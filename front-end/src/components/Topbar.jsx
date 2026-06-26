@@ -2,14 +2,38 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, Bell, ChevronDown, LogOut, User, Settings } from "lucide-react";
 import { toast } from "sonner";
+import { io } from "socket.io-client";
 import useAuthStore from "../stores/useauthstore";
+
+const API_URL = "https://trade-x-4lcn.onrender.com" || "http://localhost:5000";
 
 export default function Topbar({ onMobileMenuClick }) {
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user, token, logout, login } = useAuthStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [balance, setBalance] = useState(user?.balance ?? 0);
   const dropdownRef = useRef(null);
 
+  // Keep balance in sync with Zustand user
+  useEffect(() => {
+    setBalance(user?.balance ?? 0);
+  }, [user?.balance]);
+
+  // Real-time balance updates via Socket.IO
+  useEffect(() => {
+    if (!token) return;
+    const sock = io(API_URL, { auth: { token }, transports: ["websocket"] });
+
+    sock.on("balance:update", (newBalance) => {
+      setBalance(newBalance);
+      if (user) login({ ...user, balance: newBalance }, token);
+    });
+
+    return () => sock.disconnect();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -23,7 +47,7 @@ export default function Topbar({ onMobileMenuClick }) {
   const handleLogout = () => {
     logout();
     toast.success("Logged out successfully", { description: "See you next time!" });
-    navigate("/");
+    navigate("/login");
   };
 
   const initials = user?.name
@@ -35,7 +59,6 @@ export default function Topbar({ onMobileMenuClick }) {
 
       {/* Left */}
       <div className="flex items-center gap-3">
-        {/* Hamburger — mobile only */}
         <button
           onClick={onMobileMenuClick}
           className="lg:hidden p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
@@ -43,8 +66,6 @@ export default function Topbar({ onMobileMenuClick }) {
         >
           <Menu size={20} />
         </button>
-
-        {/* Greeting */}
         <div className="hidden sm:block">
           <p className="text-xs text-slate-400" style={{ fontFamily: "'DM Sans', sans-serif" }}>
             Welcome back,
@@ -56,8 +77,17 @@ export default function Topbar({ onMobileMenuClick }) {
       </div>
 
       {/* Right */}
-      <div className="flex items-center gap-1.5">
-        {/* Bell */}
+      <div className="flex items-center gap-2">
+
+        {/* Live balance pill */}
+        <div className="hidden sm:flex items-center gap-1.5 bg-blue-50 border border-blue-100 rounded-xl px-3 py-1.5">
+          <span className="text-xs text-blue-500 font-medium" style={{ fontFamily: "'DM Sans', sans-serif" }}>Balance</span>
+          <span className="text-sm font-bold text-blue-700" style={{ fontFamily: "'Sora', sans-serif" }}>
+            ${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+
+        {/* Notification bell */}
         <button
           className="relative p-2.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
           aria-label="Notifications"
@@ -66,7 +96,7 @@ export default function Topbar({ onMobileMenuClick }) {
           <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-blue-500" />
         </button>
 
-        {/* Profile */}
+        {/* Profile dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setDropdownOpen((v) => !v)}
@@ -91,6 +121,7 @@ export default function Topbar({ onMobileMenuClick }) {
 
           {dropdownOpen && (
             <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/60 py-1.5 z-50">
+              {/* User info */}
               <div className="px-4 py-3 border-b border-slate-100">
                 <p className="text-sm font-semibold text-slate-800 truncate" style={{ fontFamily: "'Sora', sans-serif" }}>
                   {user?.name}
@@ -98,11 +129,25 @@ export default function Topbar({ onMobileMenuClick }) {
                 <p className="text-xs text-slate-400 truncate mt-0.5" style={{ fontFamily: "'DM Sans', sans-serif" }}>
                   {user?.email}
                 </p>
+                {/* Mobile balance */}
+                <p className="text-xs font-bold text-blue-600 mt-1.5 sm:hidden" style={{ fontFamily: "'Sora', sans-serif" }}>
+                  ${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                </p>
               </div>
+
               <div className="py-1">
-                <DropItem icon={User} label="My Profile" onClick={() => { navigate("/dashboard/settings"); setDropdownOpen(false); }} />
-                <DropItem icon={Settings} label="Settings" onClick={() => { navigate("/dashboard/settings"); setDropdownOpen(false); }} />
+                <DropItem
+                  icon={User}
+                  label="My Profile"
+                  onClick={() => { navigate("/dashboard/settings"); setDropdownOpen(false); }}
+                />
+                <DropItem
+                  icon={Settings}
+                  label="Settings"
+                  onClick={() => { navigate("/dashboard/settings"); setDropdownOpen(false); }}
+                />
               </div>
+
               <div className="border-t border-slate-100 pt-1 pb-1">
                 <DropItem icon={LogOut} label="Log out" onClick={handleLogout} danger />
               </div>
@@ -119,7 +164,9 @@ function DropItem({ icon: Icon, label, onClick, danger }) {
     <button
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-        danger ? "text-red-500 hover:bg-red-50" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+        danger
+          ? "text-red-500 hover:bg-red-50"
+          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
       }`}
       style={{ fontFamily: "'DM Sans', sans-serif" }}
     >

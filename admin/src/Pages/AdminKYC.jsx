@@ -55,19 +55,17 @@ function KycModal({ sub, onClose, onUpdate }) {
           </div>
 
           {/* Document images */}
-          <div className="grid grid-cols-2 gap-3">
-            {[["Front", sub.frontImage], ["Back", sub.backImage]].map(([label, path]) => (
-              <div key={label}>
-                <p className="text-xs font-semibold text-slate-500 mb-1 uppercase">{label}</p>
-                <a href={`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/${path}`}
-                  target="_blank" rel="noreferrer"
-                  className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline bg-blue-50 rounded-lg px-3 py-2 border border-blue-100">
-                  <ExternalLink size={12} />
-                  View document
-                </a>
-              </div>
-            ))}
-          </div>
+          {[["Front", sub.frontImage], ["Back", sub.backImage]].map(([label, path]) => (
+  <div key={label}>
+    <p className="text-xs font-semibold text-slate-500 mb-1 uppercase">{label}</p>
+    <a href={path}
+      target="_blank" rel="noreferrer"
+      className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline bg-blue-50 rounded-lg px-3 py-2 border border-blue-100">
+      <ExternalLink size={12} />
+      View document
+    </a>
+  </div>
+))}
 
           {/* Rejection reason */}
           {sub.status === "pending" && (

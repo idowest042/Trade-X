@@ -16,6 +16,8 @@ import {
   ChevronRight,
   Headphones,
   Gift,
+  Activity,
+  House
 } from "lucide-react";
 
 const navGroups = [
@@ -36,12 +38,12 @@ const navGroups = [
   {
     label: "Trading",
     items: [
-      { to: "/dashboard/trade",        label: "Live Trading",     icon: TrendingUp     },
       { to: "/dashboard/plans",        label: "Investment Plans", icon: TrendingUp },
       { to: "/dashboard/investments",  label: "My Investments",   icon: Briefcase },
+      { to: "/dashboard/trade",        label: "Live Trading",     icon: Activity  },
       { to: "/dashboard/transactions", label: "Transactions",     icon: FileText },
       { to: "/dashboard/swap",         label: "Crypto Swap",      icon: ArrowLeftRight },
-      { to: "/dashboard/transfer",     label: "Transfer",         icon: Send           },
+      { to: "/dashboard/transfer",     label: "Transfer",         icon: Send },
     ],
   },
   {
@@ -49,6 +51,7 @@ const navGroups = [
     items: [
       { to: "/dashboard/referral", label: "Referral",  icon: Gift     },
       { to: "/dashboard/settings", label: "Settings",  icon: Settings },
+      { to: "/", label: "Home",  icon: House },
     ],
   },
 ];
@@ -105,7 +108,6 @@ export default function Sidebar({ collapsed, onToggleCollapse, isMobile, onMobil
       <nav className="flex-1 overflow-y-auto py-3 px-2">
         {navGroups.map((group) => (
           <div key={group.label} className="mb-2">
-            {/* Group heading — hide when collapsed on desktop */}
             {!collapsed && (
               <p
                 className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400"
@@ -182,13 +184,10 @@ function NavItem({ item, collapsed, onClose }) {
               isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600"
             }`}
           />
-
-          {/* Label — hidden when collapsed on desktop */}
           <span className={`truncate ${collapsed ? "lg:hidden" : ""}`}>
             {label}
           </span>
 
-          {/* Hover tooltip when collapsed */}
           {collapsed && (
             <span
               className="
