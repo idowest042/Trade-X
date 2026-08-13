@@ -1,8 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowLeftRight, ArrowUpDown, Info, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { getSocket } from "../../stores/socket";
 import useAuthStore from "../../stores/useauthstore";
 import api from "../../lib/api";
+
+const API_URL = "https://trade-x-4lcn.onrender.com" || "http://localhost:5000";
 
 const CURRENCIES = ["USD", "USDT", "BTC", "ETH", "SOL", "BNB"];
 const ICONS = {
@@ -55,7 +58,8 @@ function HistoryRow({ swap }) {
 }
 
 export default function SwapPage() {
-  const { user } = useAuthStore();
+  const { user, login, token } = useAuthStore();
+  const socketRef = useRef(null);
   const [rates,    setRates]    = useState({});
   const [balances, setBalances] = useState({});
   const [from,     setFrom]     = useState("USD");
@@ -72,6 +76,23 @@ export default function SwapPage() {
   const converted  = rates[to] ? parseFloat((netUSD / rates[to]).toFixed(8)) : 0;
   const fromBal    = balances[from] ?? 0;
   const canSwap    = parsed > 0 && parsed <= fromBal && from !== to && !loading;
+
+  // ── Socket for real-time balance + crypto updates (shared connection)
+  useEffect(() => {
+    const sock = getSocket(token);
+
+    const onBalance = (newBalance) => setBalances(prev => ({ ...prev, USD: newBalance }));
+    const onCrypto  = (cryptoBalances) => setBalances(prev => ({ ...prev, ...cryptoBalances }));
+
+    sock.on("balance:update", onBalance);
+    sock.on("crypto:update",  onCrypto);
+
+    return () => {
+      sock.off("balance:update", onBalance);
+      sock.off("crypto:update",  onCrypto);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   useEffect(() => {
     Promise.all([
@@ -231,7 +252,7 @@ export default function SwapPage() {
               {/* Rate info */}
               <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-50 rounded-xl px-4 py-2.5" style={{ fontFamily: "'DM Sans', sans-serif" }}>
                 <Info size={12} className="flex-shrink-0" />
-                Rates are admin-controlled and updated periodically. 2% fee deducted from source amount.
+                2% fee deducted from source amount.
               </div>
 
               <button onClick={handleSwap} disabled={!canSwap}

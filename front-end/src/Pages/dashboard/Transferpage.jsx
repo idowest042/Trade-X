@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Send, ArrowDownLeft, ArrowUpRight, AlertCircle, Info } from "lucide-react";
 import { toast } from "sonner";
+import { getSocket } from "../../stores/socket";
 import useAuthStore from "../../stores/useauthstore";
 import api from "../../lib/api";
 
@@ -32,7 +33,8 @@ function TransferRow({ t, userId }) {
 }
 
 export default function TransferPage() {
-  const { user } = useAuthStore();
+  const { user, login, token } = useAuthStore();
+  const socketRef = useRef(null);
   const [form, setForm]         = useState({ recipientEmail: "", amount: "", note: "" });
   const [balance, setBalance]   = useState(user?.balance || 0);
   const [history, setHistory]   = useState([]);
@@ -42,6 +44,28 @@ export default function TransferPage() {
   const parsed   = parseFloat(form.amount) || 0;
   const canSend  = form.recipientEmail.trim().length > 4 && parsed > 0 && parsed <= balance && !submitting;
   const amtError = form.amount && (parsed <= 0 ? "Enter a valid amount." : parsed > balance ? "Insufficient balance." : null);
+
+  // ── Socket for real-time balance + incoming transfer notifications
+  useEffect(() => {
+    const sock = getSocket(token);
+
+    const onBalance = (newBalance) => setBalance(newBalance);
+    const onReceived = ({ from, amount }) => {
+      toast.success(`💸 Transfer received!`, {
+        description: `$${Number(amount).toLocaleString()} received from ${from}.`,
+      });
+      setBalance(prev => prev + amount);
+    };
+
+    sock.on("balance:update",     onBalance);
+    sock.on("transfer:received",  onReceived);
+
+    return () => {
+      sock.off("balance:update",    onBalance);
+      sock.off("transfer:received", onReceived);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   useEffect(() => {
     Promise.all([api.get("/api/transfer/my"), api.get("/api/auth/me")])

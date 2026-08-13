@@ -1,5 +1,6 @@
 import React from 'react';
 import { Mail, Headset } from 'lucide-react';
+import Logo from './Logo';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -25,7 +26,10 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Brand Column */}
           <div>
-            <h3 className="text-2xl font-bold text-white mb-4">TradeX</h3>
+            <div className="flex items-center gap-2.5 mb-4">
+              <Logo className="h-9 w-9" />
+              <span className="text-2xl font-bold text-white">TradeX</span>
+            </div>
             <p className="text-gray-300 leading-relaxed text-sm">
               TradeX is a digital investment platform offering access to forex and cryptocurrency opportunities through secure, transparent systems.
             </p>

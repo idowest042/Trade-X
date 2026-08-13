@@ -2,14 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, Bell, ChevronDown, LogOut, User, Settings } from "lucide-react";
 import { toast } from "sonner";
-import { io } from "socket.io-client";
-import useAuthStore from "../stores/useauthstore";
-
-const API_URL = "https://trade-x-4lcn.onrender.com" || "http://localhost:5000";
+import { getSocket } from "../stores/socket";
+import useAuthStore from "../stores/useauthstore"
 
 export default function Topbar({ onMobileMenuClick }) {
   const navigate = useNavigate();
-  const { user, token, logout, login } = useAuthStore();
+  const { user, token, logout } = useAuthStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [balance, setBalance] = useState(user?.balance ?? 0);
   const dropdownRef = useRef(null);
@@ -19,17 +17,15 @@ export default function Topbar({ onMobileMenuClick }) {
     setBalance(user?.balance ?? 0);
   }, [user?.balance]);
 
-  // Real-time balance updates via Socket.IO
+  // Real-time balance updates via the shared Socket.IO connection
   useEffect(() => {
     if (!token) return;
-    const sock = io(API_URL, { auth: { token }, transports: ["websocket"] });
+    const sock = getSocket(token);
 
-    sock.on("balance:update", (newBalance) => {
-      setBalance(newBalance);
-      if (user) login({ ...user, balance: newBalance }, token);
-    });
+    const onBalance = (newBalance) => setBalance(newBalance);
+    sock.on("balance:update", onBalance);
 
-    return () => sock.disconnect();
+    return () => sock.off("balance:update", onBalance);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 

@@ -157,7 +157,7 @@ export default function WithdrawPage() {
 
       toast.success("Withdrawal submitted!", {
         id: toastId,
-        description: "Your request is pending admin approval. Funds will be sent once confirmed.",
+        description: "Your request is pending approval. Funds will be sent once confirmed.",
       });
 
       setWithdrawals(prev => [data.withdrawal, ...prev]);
@@ -471,7 +471,7 @@ export default function WithdrawPage() {
               <div className="px-5 pb-4 pt-2">
                 <div className="bg-slate-50 rounded-xl px-4 py-3 space-y-1.5">
                   {[
-                    { icon: Clock,        color: "text-amber-500", text: "Pending — awaiting admin review"       },
+                    { icon: Clock,        color: "text-amber-500", text: "Pending — awaiting review"       },
                     { icon: CheckCircle2, color: "text-green-500", text: "Approved — funds sent to your wallet" },
                     { icon: XCircle,      color: "text-red-500",   text: "Rejected — request was declined"      },
                   ].map(({ icon: Icon, color, text }) => (

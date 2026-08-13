@@ -1,26 +1,24 @@
 import { useEffect, useState } from "react";
 import { useNavigate }         from "react-router-dom";
-import { io }                  from "socket.io-client";
 import {
   ArrowDownToLine, ArrowUpFromLine, TrendingUp,
   ArrowLeftRight, Wallet, ShieldCheck, FileText,
-  AlertCircle, Activity
+  AlertCircle, Activity,
 } from "lucide-react";
-import useAuthStore from "../../stores/useauthstore";
-import api          from "../../lib/api";
-
-const API_URL = "https://trade-x-4lcn.onrender.com" || "http://localhost:5000";
+import useAuthStore  from "../../stores/useauthstore";
+import api           from "../../lib/api";
+import { getSocket } from "../../stores/socket";
 
 export default function DashboardHome() {
   const navigate        = useNavigate();
-  const { user, login, token } = useAuthStore();
+  const { user, token } = useAuthStore();
 
   const [balance,      setBalance]    = useState(user?.balance ?? 0);
   const [kycStatus,    setKycStatus]  = useState(user?.isKycVerified ? "approved" : null);
   const [recentTxns,   setRecentTxns] = useState([]);
   const [loading,      setLoading]    = useState(true);
 
-  // ── Fetch live data on mount
+  // ── Fetch live data on mount (no login() call — avoids cross-component re-render storms)
   useEffect(() => {
     Promise.all([
       api.get("/api/auth/me"),
@@ -31,20 +29,16 @@ export default function DashboardHome() {
       setBalance(u.balance ?? 0);
       setKycStatus(kycRes.data.kyc?.status || null);
       setRecentTxns((txRes.data.transactions || []).slice(0, 5));
-      if (user) login({ ...u }, token);
     }).catch(() => {})
       .finally(() => setLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Socket for real-time balance updates
+  // ── Socket for real-time balance updates (shared connection)
   useEffect(() => {
-    const sock = io(API_URL, { auth: { token }, transports: ["websocket"] });
-    sock.on("balance:update", (bal) => {
-      setBalance(bal);
-      if (user) login({ ...user, balance: bal }, token);
-    });
-    return () => sock.disconnect();
+    const sock = getSocket(token);
+    const onBalance = (bal) => setBalance(bal);
+    sock.on("balance:update", onBalance);
+    return () => sock.off("balance:update", onBalance);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 

@@ -11,6 +11,7 @@ import {
   LogOut 
 } from 'lucide-react';
 import useAuthStore from '../stores/useauthstore';
+import Logo from './Logo';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -185,9 +186,9 @@ const Navbar = () => {
             <div className="flex-shrink-0">
               <Link 
                 to="/" 
-                className="text-2xl font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                className="flex items-center transition-opacity hover:opacity-80"
               >
-                TradeX
+                <Logo className="h-9 w-9" />
               </Link>
             </div>
 
@@ -336,7 +337,7 @@ const Navbar = () => {
             <div className="flex lg:hidden items-center space-x-3">
               {isAuthenticated && (
                 <Link
-                  to="/invest"
+                  to="/dashboard/plans"
                   className="px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors text-sm shadow-sm"
                 >
                   Invest
@@ -389,9 +390,9 @@ const Navbar = () => {
                 <Link 
                   to="/" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-2xl font-bold text-blue-600"
+                  className="flex items-center"
                 >
-                  TradeX
+                  <Logo className="h-9 w-9" />
                 </Link>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}

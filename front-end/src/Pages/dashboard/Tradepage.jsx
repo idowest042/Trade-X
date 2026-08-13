@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createChart, CandlestickSeries } from "lightweight-charts";
-import { io }        from "socket.io-client";
 import { Activity, DollarSign, AlertCircle, X, TrendingUp, TrendingDown } from "lucide-react";
 import { toast }     from "sonner";
-import useAuthStore from "../../stores/useauthstore";
+import useAuthStore  from "../../stores/useauthstore";
 import api           from "../../lib/api";
+import { getSocket } from "../../stores/socket";
 
 const ASSETS      = ["BTC", "ETH", "SOL", "BNB"];
-const API_URL     = "https://trade-x-4lcn.onrender.com" || "http://localhost:5000";
 const ASSET_COLOR = { BTC: "#f97316", ETH: "#6366f1", SOL: "#a855f7", BNB: "#eab308" };
 
 // ─── PnL chip ─────────────────────────────────────────────────────────────────
@@ -23,10 +22,13 @@ function Pnl({ value }) {
 }
 
 // ─── Candlestick Chart ────────────────────────────────────────────────────────
-// Key fix: chartUpdateRef is passed as a stable ref object so the parent
-// can call chartUpdateRef.current.update(candle) without stale closures.
+// chartUpdateRef is a stable ref object the parent owns. We write our update
+// function into chartUpdateRef.current so socket handlers never call a stale
+// closure. We also track the last candle time we've drawn so we never feed
+// lightweight-charts an out-of-order timestamp (which it silently rejects).
 function CandleChart({ asset, basePrice, chartUpdateRef }) {
-  const divRef = useRef(null);
+  const divRef     = useRef(null);
+  const lastTimeRef = useRef(0);
 
   useEffect(() => {
     if (!divRef.current) return;
@@ -59,11 +61,14 @@ function CandleChart({ asset, basePrice, chartUpdateRef }) {
       wickDownColor:  "#ef4444",
     });
 
-    // Seed 80 historical candles so the chart looks populated immediately
-    const now  = Math.floor(Date.now() / 1000);
-    let   prev = basePrice;
+    // Seed historical candles ending at "now - 2s" so the very next live
+    // tick (which the server stamps with the current second) always has a
+    // strictly greater time than our last seeded candle.
+    const nowSec = Math.floor(Date.now() / 1000);
+    const seedEnd = nowSec - 2;
+    let   prev    = basePrice;
     const seed = Array.from({ length: 80 }, (_, i) => {
-      const t = now - (80 - i) * 2;
+      const t = seedEnd - (80 - i) * 2;
       const o = prev;
       const c = parseFloat((o + (Math.random() - 0.5) * o * 0.014).toFixed(2));
       const h = parseFloat((Math.max(o, c) * (1 + Math.random() * 0.005)).toFixed(2));
@@ -72,11 +77,23 @@ function CandleChart({ asset, basePrice, chartUpdateRef }) {
       return { time: t, open: o, high: h, low: l, close: c };
     });
     series.setData(seed);
+    lastTimeRef.current = seed[seed.length - 1].time;
 
-    // Store update fn in the stable ref passed from parent
-    // This never becomes stale because it points to a ref object, not a closure value
+    // Write update fn into the stable ref the parent owns.
     chartUpdateRef.current = (candle) => {
-      try { series.update(candle); } catch { /* ignore if chart already removed */ }
+      // Guard against out-of-order / duplicate timestamps, which
+      // lightweight-charts will throw on (and we don't want to swallow
+      // real errors anymore — only this specific, expected race).
+      if (candle.time < lastTimeRef.current) return;
+
+      if (candle.time === lastTimeRef.current) {
+        // Same second as last candle — update it in place (high/low/close move)
+        series.update(candle);
+      } else {
+        // New second — this becomes the new "last" candle
+        series.update(candle);
+        lastTimeRef.current = candle.time;
+      }
     };
 
     const resize = () => {
@@ -85,11 +102,10 @@ function CandleChart({ asset, basePrice, chartUpdateRef }) {
     window.addEventListener("resize", resize);
 
     return () => {
-      chartUpdateRef.current = null; // clear so stale updates don't fire
+      chartUpdateRef.current = null;
       window.removeEventListener("resize", resize);
       chart.remove();
     };
-  // Only re-run when the asset changes (which remounts via key anyway)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [asset]);
 
@@ -98,7 +114,7 @@ function CandleChart({ asset, basePrice, chartUpdateRef }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function TradePage() {
-  const { user, login, token } = useAuthStore();
+  const { user, token } = useAuthStore();
 
   // One stable ref per asset for chart update functions
   // These never become stale — we write directly into ref.current
@@ -126,67 +142,69 @@ export default function TradePage() {
   // Keep ref in sync with state so socket handler doesn't go stale
   useEffect(() => { openTradesRef.current = openTrades; }, [openTrades]);
 
-  // ── Socket.IO — registered ONCE, reads from refs ────────────────────────────
+  // ── Socket.IO — uses the ONE shared connection, never creates its own ───────
   useEffect(() => {
-    const sock = io(API_URL, { auth: { token }, transports: ["websocket"] });
+    const sock = getSocket(token);
 
-    sock.on("connect",    () => setLive(true));
-    sock.on("disconnect", () => setLive(false));
-
-    sock.on("market:update", ({ asset: a, candle }) => {
-      // 1. Update displayed price ticker
+    const onMarketUpdate = ({ asset: a, candle }) => {
       setPrices(p => ({ ...p, [a]: candle.close }));
-
-      // 2. Push candle to the correct chart via stable ref — no stale closure
       chartRefs.current[a]?.current?.(candle);
 
-      // 3. Recalculate live PnL for every open trade on this asset
-      //    Preserve adminOffset so admin adjustments aren't wiped each tick
       setOpenTrades(prev => prev.map(t => {
         if (t.asset !== a || t.status !== "open") return t;
-
         const priceDelta = candle.close - t.entryPrice;
         const marketPnL  = t.type === "buy"
           ? (priceDelta / t.entryPrice) * t.amount
           : -(priceDelta / t.entryPrice) * t.amount;
-
-        // adminOffset is accumulated from admin adjust events and preserved here
         const total = parseFloat((marketPnL + (t.adminOffset || 0)).toFixed(2));
-
         return { ...t, currentPrice: candle.close, livePnL: total };
       }));
-    });
+    };
 
-    // Admin pushed a trade adjustment
-    sock.on("trade:update", (updatedTrade) => {
+    const onTradeUpdate = (updatedTrade) => {
       if (updatedTrade.status === "closed") {
         setOpenTrades(p => p.filter(t => t._id !== updatedTrade._id));
         return;
       }
-      // Merge the admin's profitLoss into adminOffset so market ticks
-      // continue to move ON TOP of the admin's adjustment
       setOpenTrades(p => p.map(t => {
         if (t._id !== updatedTrade._id) return t;
         return {
           ...t,
           profitLoss:  updatedTrade.profitLoss,
-          adminOffset: updatedTrade.profitLoss, // lock admin value as base offset
+          adminOffset: updatedTrade.profitLoss,
           livePnL:     updatedTrade.profitLoss,
         };
       }));
       toast.info("📊 Trade updated by admin", {
         description: `New PnL base: ${updatedTrade.profitLoss >= 0 ? "+" : ""}$${updatedTrade.profitLoss?.toFixed(2)}`,
       });
-    });
+    };
 
-    sock.on("balance:update", (bal) => {
-      setBalance(bal);
-      if (user) login({ ...user, balance: bal }, token);
-    });
+    const onBalanceUpdate = (bal) => setBalance(bal);
+    const onConnect       = () => setLive(true);
+    const onDisconnect    = () => setLive(false);
+    const onReconnect     = () => setLive(true);
 
-    return () => sock.disconnect();
+    sock.on("connect",        onConnect);
+    sock.on("disconnect",     onDisconnect);
+    sock.on("reconnect",      onReconnect);
+    sock.on("market:update",  onMarketUpdate);
+    sock.on("trade:update",   onTradeUpdate);
+    sock.on("balance:update", onBalanceUpdate);
+
+    // Reflect current connection state immediately
+    setLive(sock.connected);
+
+    return () => {
+      sock.off("connect",        onConnect);
+      sock.off("disconnect",     onDisconnect);
+      sock.off("reconnect",      onReconnect);
+      sock.off("market:update",  onMarketUpdate);
+      sock.off("trade:update",   onTradeUpdate);
+      sock.off("balance:update", onBalanceUpdate);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, []);
 
   // ── Load open trades + balance on mount ─────────────────────────────────────
   useEffect(() => {
@@ -271,7 +289,7 @@ export default function TradePage() {
               Live Trading
             </h1>
             <p className="text-sm text-slate-500 mt-0.5" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-              Live market · candles update every 2 seconds automatically.
+              Simulated market · candles update every 2 seconds automatically.
             </p>
           </div>
           <div className="flex items-center gap-2.5">
