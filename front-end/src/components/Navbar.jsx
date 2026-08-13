@@ -265,7 +265,7 @@ const Navbar = () => {
                 <>
                   <Link
                     to="/dashboard/trade"
-                    className="px-6 py-2.5 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors shadow-sm"
+                    className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-l-full hover:bg-blue-700 transition-colors shadow-sm"
                   >
                     Trade
                   </Link>
@@ -338,7 +338,7 @@ const Navbar = () => {
               {isAuthenticated && (
                 <Link
                   to="/dashboard/plans"
-                  className="px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors text-sm shadow-sm"
+                  className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors text-sm shadow-sm"
                 >
                   Invest
                 </Link>
