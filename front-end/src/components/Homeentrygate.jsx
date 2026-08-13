@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import LoadingScreen from "./LoadingScreen";
-import SecurityWarningModal from "./SecurityWarningModal";
+import LoadingScreen from "./Loadingscreen";
+import SecurityWarningModal from "./Securitywarningmodal";
 
 /**
  * Drop this INSIDE your Home page component only (not App.jsx, not other routes).
