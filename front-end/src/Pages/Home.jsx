@@ -12,7 +12,7 @@ import Footer from '../components/Footer'
 import Testimonials from '../components/Testimonials'
 import Services from '../components/Services'
 import ChatWidget from '../components/ChatWidget'
-import HomeEntryGate from "../components/HomeEntryGate"; // adjust path to wherever you save it
+import HomeEntryGate from '../components/Homeentrygate'; // adjust path to wherever you save it
 
 const Home = () => {
   return (
