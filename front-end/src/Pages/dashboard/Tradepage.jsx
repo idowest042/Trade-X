@@ -16,7 +16,7 @@ import FarmView         from "./FarmView";
 const NAV_TABS = [
   { id: "market",   label: "Market",   icon: LayoutGrid },
   { id: "farm",     label: "Farm",     icon: Sprout },
-  { id: "holdings", label: "Holdings", icon: Wallet },
+  { id: "holdings", label: "Holdings", icon: Wallet }, 
 ];
 
 export default function TradeHub() {
