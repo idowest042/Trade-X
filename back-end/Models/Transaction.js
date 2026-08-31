@@ -7,9 +7,13 @@ const transactionSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    type: {
+     type: {
   type: String,
-  enum: ["deposit", "withdrawal", "investment", "profit", "trade_open", "trade_close","trade_profit"],
+  enum: [
+    "deposit", "withdrawal", "investment", "profit",
+    "trade_open", "trade_close", "trade_profit", "trade_loss",
+    "farm_stake", "farm_unstake",
+  ],
   required: true,
 },
     amount: {
