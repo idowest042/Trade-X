@@ -7,7 +7,7 @@ import api           from "../../lib/api";
 import { getSocket } from "../../stores/socket";
 import { TRADEABLE_SYMBOLS } from "./tradeUtils";
 
-import useMarketData    from "./useMarketData";
+import useMarketData    from "./useMarketData.js";
 import MarketView       from "./MarketView";
 import CoinDetailView   from "./CoinDetailView";
 import HoldingsView     from "./HoldingsView";
