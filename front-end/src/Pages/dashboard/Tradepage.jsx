@@ -18,7 +18,7 @@ const NAV_TABS = [
   { id: "farm",     label: "Farm",     icon: Sprout },
   { id: "holdings", label: "Holdings", icon: Wallet }, 
 ];
-
+ 
 export default function TradeHub() {
   const { user, token } = useAuthStore();
   const [searchParams, setSearchParams] = useSearchParams();
