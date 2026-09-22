@@ -148,9 +148,16 @@ const ChatWidget = () => {
         <div
           className="
             bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden
-            fixed inset-0 w-full h-full rounded-none
+            fixed inset-x-0 bottom-0 w-full rounded-none
             sm:static sm:inset-auto sm:w-96 sm:h-[500px] sm:rounded-lg
           "
+          style={{
+            // On mobile the panel is full-screen, so drop its top edge below
+            // the app's own nav bar (and any device notch) instead of
+            // starting at the very top of the viewport — otherwise the
+            // close button ends up hidden underneath the nav bar.
+            top: 'calc(3.5rem + env(safe-area-inset-top, 0px))',
+          }}
         >
           {/* Header */}
           <div className="bg-blue-600 text-white p-4 flex items-center justify-between flex-shrink-0">

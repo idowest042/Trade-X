@@ -264,10 +264,10 @@ const Navbar = () => {
               ) : (
                 <>
                   <Link
-                    to="/dashboard/trade"
+                    to="/dashboard/investments"
                     className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-l-full hover:bg-blue-700 transition-colors shadow-sm"
                   >
-                    Trade
+                    Invest
                   </Link>
                   
                   <div className="relative" ref={userDropdownRef}>
