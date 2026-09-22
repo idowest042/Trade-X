@@ -40,7 +40,6 @@ const navGroups = [
     items: [
       { to: "/dashboard/plans",        label: "Investment Plans", icon: TrendingUp },
       { to: "/dashboard/investments",  label: "My Investments",   icon: Briefcase },
-      { to: "/dashboard/trade",        label: "Live Trading",     icon: Activity  },
       { to: "/dashboard/transactions", label: "Transactions",     icon: FileText },
       { to: "/dashboard/swap",         label: "Crypto Swap",      icon: ArrowLeftRight },
       { to: "/dashboard/transfer",     label: "Transfer",         icon: Send },
