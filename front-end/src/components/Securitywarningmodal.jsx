@@ -1,7 +1,7 @@
 import { ShieldAlert } from "lucide-react";
 
 /**
- * TradeX security/scam warning modal.
+ * TradeX risk disclosure modal.
  * Blocks interaction until the user clicks OK.
  *
  * Props:
@@ -16,35 +16,34 @@ export default function SecurityWarningModal({ onClose }) {
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-600">
             <ShieldAlert className="w-5 h-5 text-white" />
           </div>
-          <h2 className="text-lg font-bold text-gray-900">Security Notice</h2>
+          <h2 className="text-lg font-bold text-gray-900">Risk Disclosure</h2>
         </div>
 
         {/* Body */}
         <div className="px-6 py-5 space-y-3 text-sm text-gray-700 leading-relaxed">
           <p>
             <span className="font-semibold text-gray-900">
-              NEVER make payments
+              Trading involves significant risk.
             </span>{" "}
-            to any external wallet addresses or account details provided by
-            anyone outside your financial adviser. Our staff will{" "}
-            <span className="font-semibold text-gray-900">NEVER</span> ask
-            you to send money to any wallet address, Western Union, or bank
-            account different from those provided only within our website.
+            The value of your investments can go up as well as down, and you
+            may lose some or all of your invested capital. Past performance
+            is not a reliable indicator of future results.
           </p>
           <p>
-            Before making any transaction, please always contact your
-            financial adviser for guidance.
+            Only invest funds you can afford to lose, and make sure you fully
+            understand the products and risks involved before placing any
+            trade.
           </p>
           <p>
-            Always be vigilant and always inquire from our official support
-            email{" "}
+            If you are unsure about anything, please reach out to our support
+            team at{" "}
             <a
               href="mailto:support@tradex.com"
               className="font-medium text-blue-600 hover:underline"
             >
               support@tradex.com
             </a>{" "}
-            to confirm any of such claims.
+            before proceeding.
           </p>
         </div>
 
@@ -54,7 +53,7 @@ export default function SecurityWarningModal({ onClose }) {
             onClick={onClose}
             className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors"
           >
-            OK
+            I Understand
           </button>
         </div>
       </div>
