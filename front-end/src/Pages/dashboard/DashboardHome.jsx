@@ -13,7 +13,6 @@ const QUICK_ACTIONS = [
   { icon: ArrowDownToLine, label: "Deposit",      path: "/dashboard/deposit"      },
   { icon: TrendingUp,      label: "Invest",       path: "/dashboard/plans"        },
   { icon: ArrowUpFromLine, label: "Withdraw",     path: "/dashboard/withdraw"     },
-  { icon: Activity,        label: "Trade",        path: "/dashboard/trade"        },
   { icon: ArrowLeftRight,  label: "Swap",         path: "/dashboard/swap"         },
   { icon: ArrowDownToLine, label: "Transfer",     path: "/dashboard/transfer"     },
   { icon: FileText,        label: "Transactions", path: "/dashboard/transactions" },
