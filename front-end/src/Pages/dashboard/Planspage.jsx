@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 import useAuthStore from "../../stores/useauthstore";
 import api from "../../lib/api";
+import { getSocket } from "../../stores/socket";
 
 // ─── Plan config (mirrors backend) ───────────────────────────────────────────
 const PLANS = [
@@ -52,7 +53,7 @@ const PLANS = [
 ];
 
 const money = (n) =>
-  Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  Number(n ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // ─── Plan Card ────────────────────────────────────────────────────────────────
 function PlanCard({ plan, balance, onPurchase, loading }) {
@@ -95,7 +96,7 @@ function PlanCard({ plan, balance, onPurchase, loading }) {
 
       <div className="px-6 py-5 flex flex-col flex-1 gap-5">
 
-        {/* Stats row — ledger cells, not colored tiles */}
+        {/* Stats row */}
         <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 border border-slate-100 rounded-md overflow-hidden">
           {[
             { icon: Clock,      label: "Duration",  val: `${plan.duration} days`         },
@@ -169,7 +170,7 @@ function PlanCard({ plan, balance, onPurchase, loading }) {
           </div>
         )}
 
-        {/* CTA — one consistent accent across all tiers */}
+        {/* CTA */}
         <button
           onClick={() => onPurchase(plan, amount)}
           disabled={!canBuy || loading}
@@ -261,21 +262,39 @@ function ActiveCard({ inv }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function PlansPage() {
-  const navigate  = useNavigate();
-  const { user }  = useAuthStore();
-  const balance   = user?.balance ?? 0;
+  const navigate = useNavigate();
+  const { user, token, updateUser } = useAuthStore();
+  const balance = user?.balance ?? 0;
 
   const [investments, setInvestments] = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [buying,      setBuying]      = useState(false);
   const [activeTab,   setActiveTab]   = useState("plans");
 
+  // Investments list
   useEffect(() => {
     api.get("/api/investments/my")
       .then(({ data }) => setInvestments(data.investments || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Sync fresh balance from the server on mount (fixes stale persisted user)
+  useEffect(() => {
+    api.get("/api/auth/me")
+      .then(({ data }) => updateUser(data.user))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Live balance updates (deposit approved, etc.)
+  useEffect(() => {
+    const sock = getSocket(token);
+    const onBalance = (bal) => updateUser({ balance: bal });
+    sock.on("balance:update", onBalance);
+    return () => sock.off("balance:update", onBalance);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   const activeInvestments = investments.filter(i => i.status === "active");
 
@@ -313,6 +332,11 @@ export default function PlansPage() {
 
       setInvestments(prev => [data.investment, ...prev]);
       setActiveTab("active");
+
+      // Refresh balance after the purchase deducted funds
+      api.get("/api/auth/me")
+        .then(({ data }) => updateUser(data.user))
+        .catch(() => {});
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to activate plan. Please try again.";
       toast.error("Activation failed", { id: toastId, description: msg });
@@ -381,7 +405,7 @@ export default function PlansPage() {
         ))}
       </div>
 
-      {/* ── Plans tab ─────────────────────────────────────────────── */}
+      {/* Plans tab */}
       {activeTab === "plans" && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {PLANS.map(plan => (
@@ -396,7 +420,7 @@ export default function PlansPage() {
         </div>
       )}
 
-      {/* ── Active tab ────────────────────────────────────────────── */}
+      {/* Active tab */}
       {activeTab === "active" && (
         <div className="space-y-4">
           {loading ? (

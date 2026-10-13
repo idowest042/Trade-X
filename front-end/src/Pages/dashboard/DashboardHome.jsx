@@ -36,10 +36,12 @@ const money = (n) =>
   Number(n ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function DashboardHome() {
-  const navigate        = useNavigate();
-  const { user, token } = useAuthStore();
+  const navigate = useNavigate();
+  const { user, token, updateUser } = useAuthStore();
 
-  const [balance,    setBalance]    = useState(user?.balance ?? 0);
+  // Single source of truth: the store
+  const balance = user?.balance ?? 0;
+
   const [kycStatus,  setKycStatus]  = useState(user?.isKycVerified ? "approved" : null);
   const [recentTxns, setRecentTxns] = useState([]);
   const [loading,    setLoading]    = useState(true);
@@ -50,20 +52,20 @@ export default function DashboardHome() {
       api.get("/api/kyc/me").catch(() => ({ data: { kyc: null } })),
       api.get("/api/transactions/my").catch(() => ({ data: { transactions: [] } })),
     ]).then(([meRes, kycRes, txRes]) => {
-      const u = meRes.data.user;
-      setBalance(u.balance ?? 0);
+      updateUser(meRes.data.user);
       setKycStatus(kycRes.data.kyc?.status || null);
       setRecentTxns((txRes.data.transactions || []).slice(0, 5));
     }).catch(() => {})
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const sock = getSocket(token);
-    const onBalance = (bal) => setBalance(bal);
+    const onBalance = (bal) => updateUser({ balance: bal });
     sock.on("balance:update", onBalance);
     return () => sock.off("balance:update", onBalance);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const firstName   = user?.name?.split(" ")[0] || "Trader";
@@ -92,7 +94,7 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* KYC notice — a status line, not a colored card */}
+      {/* KYC notice */}
       {!kycApproved && !loading && (
         <div className={`flex items-start sm:items-center justify-between gap-4 border-l-2 pl-4 pr-4 py-3
           ${kycPending ? "border-amber-400 bg-amber-50/60" : "border-blue-500 bg-blue-50/60"}`}>
@@ -120,7 +122,7 @@ export default function DashboardHome() {
         </div>
       )}
 
-      {/* Account summary — one ledger-style panel instead of three colored tiles */}
+      {/* Account summary */}
       <div className="bg-white border border-slate-200 rounded-lg">
         <div className="grid grid-cols-2 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
           <div className="px-6 py-5">
@@ -128,7 +130,7 @@ export default function DashboardHome() {
               <Wallet size={13} /> Total balance
             </div>
             <p className="text-2xl font-semibold text-slate-900 mt-2 tabular-nums">
-              {loading ? "—" : `$${money(balance)}`}
+              {loading && !user ? "—" : `$${money(balance)}`}
             </p>
             <p className="text-xs text-slate-400 mt-1">Available funds</p>
           </div>
@@ -152,7 +154,7 @@ export default function DashboardHome() {
               <TrendingUp size={13} /> Investments
             </div>
             <button
-              onClick={() => navigate("/dashboard/investments")}
+              onClick={() => navigate("/dashboard/plans")}
               className="text-2xl font-semibold text-slate-900 mt-2 hover:text-blue-600 transition-colors flex items-center gap-1.5"
             >
               View plans <ArrowRight size={16} />
@@ -162,7 +164,7 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* Quick actions — one consistent style, not eight colors */}
+      {/* Quick actions */}
       <div>
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">
           Quick actions
@@ -181,7 +183,7 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* Recent activity — a ledger, not a card feed */}
+      {/* Recent activity */}
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
           <p className="text-sm font-medium text-slate-800">Recent activity</p>
