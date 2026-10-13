@@ -17,6 +17,12 @@ const useAuthStore = create(
         localStorage.removeItem("token");
         set({ user: null, token: null, isAuthenticated: false });
       },
+
+      // Merge fresh fields (e.g. balance) into the stored user
+      updateUser: (partial) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...partial } : state.user,
+        })),
     }),
     {
       name: "tradex-auth",
