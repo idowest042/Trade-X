@@ -13,7 +13,7 @@ router.use(protect);
 
 // User routes
 router.post("/create", createInvestment);
-router.post("/:id/topup", protect, topUpInvestment);
+router.post("/:id/topup",topUpInvestment);
 router.get("/my",      getMyInvestments);
 
 // Admin route — wired in admin panel phase
