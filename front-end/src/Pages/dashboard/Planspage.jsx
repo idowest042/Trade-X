@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import useAuthStore from "../../stores/useauthstore";
 import api from "../../lib/api";
 import { getSocket } from "../../stores/socket";
+import TopUpButton, { earnedSoFar } from "./TopUp";
+
 
 // ─── Plan config (mirrors backend) ───────────────────────────────────────────
 const PLANS = [
@@ -194,7 +196,7 @@ function PlanCard({ plan, balance, onPurchase, loading }) {
 }
 
 // ─── Active Investment Card ───────────────────────────────────────────────────
-function ActiveCard({ inv }) {
+function ActiveCard({ inv, onUpdate }) {
   const plan = PLANS.find(p => p.id === inv.planType);
 
   const start    = new Date(inv.startDate);
@@ -203,7 +205,7 @@ function ActiveCard({ inv }) {
   const elapsed  = Math.max(0, Math.floor((now - start) / (1000 * 60 * 60 * 24)));
   const daysLeft = Math.max(0, inv.duration - elapsed);
   const progress = Math.min(100, (elapsed / inv.duration) * 100);
-  const earned   = Math.min(inv.dailyReturn * elapsed, inv.totalReturn);
+  const earned   = earnedSoFar(inv);
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
@@ -221,7 +223,6 @@ function ActiveCard({ inv }) {
         </p>
       </div>
 
-      {/* Progress bar */}
       <div>
         <div className="flex justify-between text-xs text-slate-400 mb-1.5">
           <span>Progress</span>
@@ -235,7 +236,6 @@ function ActiveCard({ inv }) {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-slate-100 border border-slate-100 rounded-md overflow-hidden">
         {[
           { label: "Daily return",  val: `$${inv.dailyReturn.toFixed(2)}` },
@@ -255,6 +255,10 @@ function ActiveCard({ inv }) {
       <div className="flex items-center justify-between text-xs text-slate-400">
         <span>Started {start.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
         <span>Ends {end.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+      </div>
+
+      <div className="pt-1">
+        <TopUpButton inv={inv} onSuccess={onUpdate} />
       </div>
     </div>
   );
@@ -297,6 +301,10 @@ export default function PlansPage() {
   }, [token]);
 
   const activeInvestments = investments.filter(i => i.status === "active");
+
+  // Replace an investment in state after a successful top-up
+  const handleToppedUp = (updated) =>
+    setInvestments(prev => prev.map(i => (i._id === updated._id ? updated : i)));
 
   const handlePurchase = async (plan, amountStr) => {
     const amount = parseFloat(amountStr);
@@ -448,7 +456,7 @@ export default function PlansPage() {
             </div>
           ) : (
             activeInvestments.map(inv => (
-              <ActiveCard key={inv._id} inv={inv} />
+              <ActiveCard key={inv._id} inv={inv} onUpdate={handleToppedUp} />
             ))
           )}
         </div>

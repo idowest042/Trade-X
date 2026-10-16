@@ -1,5 +1,15 @@
 import mongoose from "mongoose";
 
+// Every deposit into an investment (the initial one + each top-up)
+const contributionSchema = new mongoose.Schema(
+  {
+    amount: { type: Number, required: true },
+    date:   { type: Date, default: Date.now },
+    days:   { type: Number, required: true }, // days this money earns for
+  },
+  { _id: false }
+);
+
 const investmentSchema = new mongoose.Schema(
   {
     userId: {
@@ -12,34 +22,14 @@ const investmentSchema = new mongoose.Schema(
       enum: ["starter", "growth", "elite"],
       required: true,
     },
-    amount: {
-      type: Number,
-      required: true,
-    },
-    roi: {
-      type: Number, // daily ROI percentage e.g. 3, 4, 6
-      required: true,
-    },
-    duration: {
-      type: Number, // in days
-      required: true,
-    },
-    dailyReturn: {
-      type: Number, // amount * roi / 100
-      required: true,
-    },
-    totalReturn: {
-      type: Number, // dailyReturn * duration
-      required: true,
-    },
-    startDate: {
-      type: Date,
-      default: Date.now,
-    },
-    endDate: {
-      type: Date,
-      required: true,
-    },
+    amount:      { type: Number, required: true }, // total invested (grows with top-ups)
+    roi:         { type: Number, required: true }, // daily ROI %
+    duration:    { type: Number, required: true }, // days
+    dailyReturn: { type: Number, required: true }, // sum of contribution daily returns
+    totalReturn: { type: Number, required: true }, // sum of contribution total profit
+    contributions: { type: [contributionSchema], default: [] },
+    startDate: { type: Date, default: Date.now },
+    endDate:   { type: Date, required: true },
     status: {
       type: String,
       enum: ["active", "completed"],

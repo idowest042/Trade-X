@@ -10,6 +10,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import api from "../../lib/api";
+import TopUpButton, { earnedSoFar } from "./TopUp";
+
 
 // ─── Plan meta ────────────────────────────────────────────────────────────────
 const PLAN_META = {
@@ -40,7 +42,7 @@ function StatusBadge({ status }) {
   );
 }
 
-function InvestmentCard({ inv }) {
+function InvestmentCard({ inv, onUpdate }) {
   const meta   = PLAN_META[inv.planType] || { name: inv.planType, color: "blue" };
   const c      = colorMap[meta.color];
   const start  = new Date(inv.startDate);
@@ -49,7 +51,7 @@ function InvestmentCard({ inv }) {
   const elapsed  = Math.max(0, Math.floor((now - start) / (1000 * 60 * 60 * 24)));
   const daysLeft = Math.max(0, inv.duration - elapsed);
   const progress = Math.min(100, (elapsed / inv.duration) * 100);
-  const earned   = Math.min(inv.dailyReturn * elapsed, inv.totalReturn);
+  const earned   = earnedSoFar(inv);
 
   return (
     <div className={`bg-white rounded-2xl border-2 ${c.border} overflow-hidden`}>
@@ -124,6 +126,9 @@ function InvestmentCard({ inv }) {
             </>
           )}
         </div>
+
+        {/* Top-up — only for active */}
+        {inv.status === "active" && <TopUpButton inv={inv} onSuccess={onUpdate} />}
       </div>
     </div>
   );
@@ -147,6 +152,10 @@ export default function MyInvestments() {
   const completed = investments.filter(i => i.status === "completed").length;
   const totalInvested  = investments.reduce((s, i) => s + i.amount, 0);
   const totalProfitAll = investments.reduce((s, i) => s + i.totalReturn, 0);
+
+  // Replace an investment in state after a successful top-up
+  const handleToppedUp = (updated) =>
+    setInvestments(prev => prev.map(i => (i._id === updated._id ? updated : i)));
 
   return (
     <>
@@ -233,7 +242,9 @@ export default function MyInvestments() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filtered.map(inv => <InvestmentCard key={inv._id} inv={inv} />)}
+            {filtered.map(inv => (
+              <InvestmentCard key={inv._id} inv={inv} onUpdate={handleToppedUp} />
+            ))}
           </div>
         )}
       </div>

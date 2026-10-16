@@ -4,6 +4,7 @@ import {
   createInvestment,
   getMyInvestments,
   getAllInvestments,
+  topUpInvestment,
 } from "../Controllers/Investmentcontroller.js";
 
 const router = Router();
@@ -12,6 +13,7 @@ router.use(protect);
 
 // User routes
 router.post("/create", createInvestment);
+router.post("/:id/topup", protect, topUpInvestment);
 router.get("/my",      getMyInvestments);
 
 // Admin route — wired in admin panel phase
