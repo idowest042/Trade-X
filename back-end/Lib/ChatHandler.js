@@ -1,7 +1,7 @@
 import ChatSession from '../Models/ChatSession.js';
 import Message from '../Models/Message.js';
 import emailService from '../Lib/emailService.js';
-import cloudinary from '../config/cloudinary.js';
+import cloudinary from '../Config/cloudinary.js';
 
 // Only accept images that were uploaded to OUR Cloudinary account/folder,
 // so nobody can send arbitrary external URLs through the socket.

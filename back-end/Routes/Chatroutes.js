@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import ChatSession from '../Models/ChatSession.js';
 import Message from '../Models/Message.js';
-import cloudinary from '../config/cloudinary.js';
+import cloudinary from '../Config/cloudinary.js';
 
 const router = express.Router();
 
