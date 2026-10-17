@@ -6,7 +6,7 @@ import { Server } from 'socket.io';
 import mongoose from 'mongoose';
 import { setupSocketHandlers } from './Lib/ChatHandler.js';
 import { connectdb } from "./Config/db.js";
-import chatRoutes from './Routes/Chatroutes.js';
+import Chatroutes from './Routes/Chatroutes.js';
 import kycRoutes from "./Routes/Kycroutes.js";
 import authRoutes from "./Routes/authRoutes.js";
 import depositRoutes from "./Routes/Depositroutes.js";
@@ -54,7 +54,7 @@ setupSocketHandlers(io);
 
 // Routes
 app.use("/api/market", marketRoute);
-app.use('/api/chat', chatRoutes);
+app.use('/api/chat', Chatroutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/kyc", kycRoutes);
 app.use("/api/deposits", depositRoutes);
