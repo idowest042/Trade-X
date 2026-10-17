@@ -1,6 +1,49 @@
 import ChatSession from '../Models/ChatSession.js';
 import Message from '../Models/Message.js';
 import emailService from '../Lib/emailService.js';
+import cloudinary from '../config/cloudinary.js';
+
+// Only accept images that were uploaded to OUR Cloudinary account/folder,
+// so nobody can send arbitrary external URLs through the socket.
+const validateImage = (imageUrl, imagePublicId) => {
+  if (!imageUrl) return { ok: true, image: null };
+
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const validUrl =
+    typeof imageUrl === 'string' &&
+    imageUrl.startsWith(`https://res.cloudinary.com/${cloudName}/`);
+  const validId =
+    typeof imagePublicId === 'string' && imagePublicId.startsWith('tradex/chat/');
+
+  if (!validUrl || !validId) return { ok: false, image: null };
+  return { ok: true, image: { imageUrl, imagePublicId } };
+};
+
+// Builds the sessions list the admin dashboard shows
+const getSessionsWithLastMessage = async () => {
+  const sessions = await ChatSession.find()
+    .sort({ lastMessageAt: -1 })
+    .limit(50);
+
+  return Promise.all(
+    sessions.map(async (session) => {
+      const lastMessage = await Message.findOne({ sessionId: session._id })
+        .sort({ createdAt: -1 });
+
+      const unreadCount = await Message.countDocuments({
+        sessionId: session._id,
+        sender: 'user',
+        read: false
+      });
+
+      return {
+        ...session.toObject(),
+        lastMessage,
+        unreadCount
+      };
+    })
+  );
+};
 
 export const setupSocketHandlers = (io) => {
   io.on('connection', (socket) => {
@@ -51,11 +94,22 @@ export const setupSocketHandlers = (io) => {
       }
     });
 
-    // User sends a message
-    socket.on('chat:sendMessage', async ({ visitorId, content }) => {
-      console.log('📥 Received chat:sendMessage from', visitorId, ':', content);
+    // User sends a message (text and/or image)
+    socket.on('chat:sendMessage', async ({ visitorId, content, imageUrl, imagePublicId }) => {
+      console.log('📥 Received chat:sendMessage from', visitorId, ':', content, imageUrl ? '(with image)' : '');
       
       try {
+        const text = (content || '').trim();
+        const { ok, image } = validateImage(imageUrl, imagePublicId);
+
+        if (!ok) {
+          socket.emit('chat:error', { message: 'Invalid image' });
+          return;
+        }
+        if (!text && !image) {
+          return;
+        }
+
         const session = await ChatSession.findOne({ visitorId });
         
         if (!session) {
@@ -71,7 +125,8 @@ export const setupSocketHandlers = (io) => {
           sessionId: session._id,
           visitorId,
           sender: 'user',
-          content
+          content: text,
+          ...(image || {})
         });
 
         console.log('✅ User message saved:', userMessage._id);
@@ -92,17 +147,14 @@ export const setupSocketHandlers = (io) => {
           message: userMessage
         });
 
-        // ✅ FIX: Don't block the request on the email send. Gmail SMTP
-        // (or any provider) can take many seconds to respond, and awaiting
-        // it here was delaying everything below it — including the
-        // auto-reply timer — by however long the email took to send.
-        // Fire-and-forget: log failures, but never let email latency
-        // hold up the realtime chat flow.
+        // Don't block the request on the email send.
         console.log('📧 Sending email notification (non-blocking)...');
-        emailService.sendNewMessageNotification(visitorId, content)
-          .catch((err) => console.error('❌ Email notification failed:', err));
+        emailService.sendNewMessageNotification(
+          visitorId,
+          text ? (image ? `${text} (+ image: ${image.imageUrl})` : text) : `📷 Sent an image: ${image.imageUrl}`
+        ).catch((err) => console.error('❌ Email notification failed:', err));
 
-        // ✅ FIX: Only send auto-reply if admin hasn't responded yet
+        // Only send auto-reply if admin hasn't responded yet
         const hasAdminReplied = session.metadata?.hasAdminReplied || false;
 
         if (!hasAdminReplied) {
@@ -118,9 +170,6 @@ export const setupSocketHandlers = (io) => {
 
               console.log('📤 Auto-reply sent:', autoReply._id);
 
-              // Guard against a dropped connection in the 1s window
-              // (e.g. mobile user closed the tab) — emitting on a
-              // disconnected socket would otherwise throw/silently fail.
               if (socket.connected) {
                 socket.emit('chat:autoReply', autoReply);
               } else {
@@ -140,11 +189,22 @@ export const setupSocketHandlers = (io) => {
       }
     });
 
-    // Admin sends a message
-    socket.on('admin:sendMessage', async ({ visitorId, content }) => {
-      console.log('📥 Received admin:sendMessage to', visitorId, ':', content);
+    // Admin sends a message (text and/or image)
+    socket.on('admin:sendMessage', async ({ visitorId, content, imageUrl, imagePublicId }) => {
+      console.log('📥 Received admin:sendMessage to', visitorId, ':', content, imageUrl ? '(with image)' : '');
       
       try {
+        const text = (content || '').trim();
+        const { ok, image } = validateImage(imageUrl, imagePublicId);
+
+        if (!ok) {
+          socket.emit('chat:error', { message: 'Invalid image' });
+          return;
+        }
+        if (!text && !image) {
+          return;
+        }
+
         const session = await ChatSession.findOne({ visitorId });
         
         if (!session) {
@@ -160,13 +220,14 @@ export const setupSocketHandlers = (io) => {
           sessionId: session._id,
           visitorId,
           sender: 'admin',
-          content,
+          content: text,
+          ...(image || {}),
           read: true // Admin messages are automatically "read" by admin
         });
 
         console.log('✅ Admin message saved:', adminMessage._id);
 
-        // ✅ FIX: Mark that admin has replied (stop auto-replies)
+        // Mark that admin has replied (stop auto-replies)
         if (!session.metadata) {
           session.metadata = {};
         }
@@ -180,14 +241,14 @@ export const setupSocketHandlers = (io) => {
         console.log('📤 Emitting chat:adminReply to user');
         io.to(visitorId).emit('chat:adminReply', adminMessage);
 
-        // ✅ FIX: Confirm to admin with delivery status
+        // Confirm to admin with delivery status
         console.log('📤 Confirming message sent to admin');
         socket.emit('admin:messageSent', {
           ...adminMessage.toObject(),
           delivered: true // Add delivery status
         });
 
-        // ✅ FIX: Broadcast to all admin dashboards to update in real-time
+        // Broadcast to all admin dashboards to update in real-time
         io.emit('admin:messageUpdate', {
           sessionId: session._id,
           visitorId,
@@ -200,33 +261,52 @@ export const setupSocketHandlers = (io) => {
       }
     });
 
+    // Admin deletes an entire conversation
+    socket.on('admin:deleteSession', async ({ visitorId }) => {
+      console.log('📥 Received admin:deleteSession for', visitorId);
+
+      try {
+        const session = await ChatSession.findOne({ visitorId });
+
+        if (!session) {
+          socket.emit('chat:error', { message: 'Session not found' });
+          return;
+        }
+
+        // Remove this conversation's images from Cloudinary
+        const withImages = await Message.find({
+          sessionId: session._id,
+          imagePublicId: { $ne: null }
+        }).select('imagePublicId');
+
+        await Promise.allSettled(
+          withImages.map((m) =>
+            cloudinary.uploader.destroy(m.imagePublicId, { resource_type: 'image' })
+          )
+        );
+
+        await Message.deleteMany({ sessionId: session._id });
+        await ChatSession.deleteOne({ _id: session._id });
+
+        console.log('🗑️  Session deleted:', session._id);
+
+        // Reset the visitor's widget (it will start a fresh chat)
+        io.to(visitorId).emit('chat:sessionDeleted');
+
+        // Tell admin dashboards, and push a fresh list through the
+        // existing 'admin:sessions' event so no store changes are needed
+        io.emit('admin:sessionDeleted', { sessionId: session._id, visitorId });
+        io.emit('admin:sessions', await getSessionsWithLastMessage());
+      } catch (error) {
+        console.error('❌ Error deleting session:', error);
+        socket.emit('chat:error', { message: 'Failed to delete conversation' });
+      }
+    });
+
     // Admin requests all sessions
     socket.on('admin:getSessions', async () => {
       try {
-        const sessions = await ChatSession.find()
-          .sort({ lastMessageAt: -1 })
-          .limit(50);
-
-        const sessionsWithLastMessage = await Promise.all(
-          sessions.map(async (session) => {
-            const lastMessage = await Message.findOne({ sessionId: session._id })
-              .sort({ createdAt: -1 });
-            
-            const unreadCount = await Message.countDocuments({
-              sessionId: session._id,
-              sender: 'user',
-              read: false
-            });
-
-            return {
-              ...session.toObject(),
-              lastMessage,
-              unreadCount
-            };
-          })
-        );
-
-        socket.emit('admin:sessions', sessionsWithLastMessage);
+        socket.emit('admin:sessions', await getSessionsWithLastMessage());
       } catch (error) {
         console.error('Error fetching sessions:', error);
         socket.emit('chat:error', { message: 'Failed to fetch sessions' });

@@ -100,11 +100,42 @@ class AdminSocketService {
     }
   }
 
-  sendMessage(visitorId, content) {
+  // image (optional): { url, publicId } returned by uploadImage()
+  sendMessage(visitorId, content, image = null) {
     if (this.socket?.connected) {
-      this.socket.emit("admin:sendMessage", { visitorId, content });
+      this.socket.emit("admin:sendMessage", {
+        visitorId,
+        content,
+        imageUrl: image?.url || null,
+        imagePublicId: image?.publicId || null,
+      });
     } else {
       console.error("❌ Cannot send message - socket not connected");
+    }
+  }
+
+  // Uploads an image file to the backend (Cloudinary) and returns { url, publicId }
+  async uploadImage(file) {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const res = await fetch(`${SOCKET_URL}/api/chat/upload`, {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || "Image upload failed");
+    }
+    return { url: data.url, publicId: data.publicId };
+  }
+
+  deleteSession(visitorId) {
+    if (this.socket?.connected) {
+      this.socket.emit("admin:deleteSession", { visitorId });
+    } else {
+      console.error("❌ Cannot delete session - socket not connected");
     }
   }
 

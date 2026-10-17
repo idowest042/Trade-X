@@ -1,8 +1,48 @@
 import express from 'express';
+import multer from 'multer';
 import ChatSession from '../Models/ChatSession.js';
 import Message from '../Models/Message.js';
+import cloudinary from '../config/cloudinary.js';
 
 const router = express.Router();
+
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (_req, file, cb) =>
+    ALLOWED_TYPES.includes(file.mimetype)
+      ? cb(null, true)
+      : cb(new Error('Only JPG, PNG, WEBP or GIF images are allowed.')),
+});
+
+// POST /api/chat/upload  (used by both visitors and admin)
+router.post('/upload', (req, res) => {
+  upload.single('image')(req, res, async (err) => {
+    if (err) {
+      const message = err.code === 'LIMIT_FILE_SIZE' ? 'Image must be under 5MB.' : err.message;
+      return res.status(400).json({ success: false, message });
+    }
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No image provided.' });
+    }
+
+    try {
+      const result = await new Promise((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream({ folder: 'tradex/chat', resource_type: 'image' }, (e, r) =>
+            e ? reject(e) : resolve(r)
+          )
+          .end(req.file.buffer);
+      });
+      res.json({ success: true, url: result.secure_url, publicId: result.public_id });
+    } catch (e) {
+      console.error('Chat image upload failed:', e);
+      res.status(500).json({ success: false, message: 'Image upload failed. Try again.' });
+    }
+  });
+});
 
 // Get all chat sessions
 router.get('/sessions', async (req, res) => {

@@ -6,30 +6,27 @@ const messageSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'ChatSession',
       required: true,
-      index: true
+      index: true,
     },
-    visitorId: {
-      type: String,
-      required: true
-    },
+    visitorId: { type: String, required: true, index: true },
     sender: {
       type: String,
       enum: ['user', 'admin', 'system'],
-      required: true
+      required: true,
     },
+    // Text is optional when the message is an image
     content: {
       type: String,
-      required: true,
-      trim: true
+      default: '',
+      required: function () {
+        return !this.imageUrl;
+      },
     },
-    read: {
-      type: Boolean,
-      default: false
-    }
+    imageUrl: { type: String, default: null },
+    imagePublicId: { type: String, default: null }, // used to delete from Cloudinary
+    read: { type: Boolean, default: false },
   },
-  {
-    timestamps: true
-  }
+  { timestamps: true }
 );
 
 const Message = mongoose.models.Message || mongoose.model('Message', messageSchema);

@@ -1,14 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, User, AlertCircle, CheckCircle, Clock, X, Menu } from 'lucide-react';
+import { Send, User, AlertCircle, CheckCircle, Clock, X, Menu, ImagePlus, Trash2, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import useAdminStore from '../Store/adminStore';
 import adminSocketService from '../Store/adminSocketService';
 
-const ChatArea = ({ session, onOpenSidebar }) => {
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+// onDeleted (optional): called after the admin deletes the open conversation,
+// so the parent can clear its selected session.
+const ChatArea = ({ session, onOpenSidebar, onDeleted }) => {
   const { messages, addMessage, markSessionAsRead } = useAdminStore();
   const [inputMessage, setInputMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploadError, setUploadError] = useState('');
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     scrollToBottom();
@@ -21,27 +30,86 @@ const ChatArea = ({ session, onOpenSidebar }) => {
     }
   }, [session, markSessionAsRead]);
 
+  // Clear any pending image when switching conversations
+  useEffect(() => {
+    clearSelectedFile();
+    setUploadError('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?._id]);
+
+  // Free the preview object URL when it changes/unmounts
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setUploadError('Only JPG, PNG, WEBP or GIF images are allowed.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > MAX_SIZE) {
+      setUploadError('Image must be under 5MB.');
+      e.target.value = '';
+      return;
+    }
+
+    setUploadError('');
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
 
-    if (!inputMessage.trim() || !session || isSending) {
+    if ((!inputMessage.trim() && !selectedFile) || !session || isSending) {
       return;
     }
 
     setIsSending(true);
+    setUploadError('');
 
     try {
-      adminSocketService.sendMessage(session.visitorId, inputMessage.trim());
+      let image = null;
+      if (selectedFile) {
+        image = await adminSocketService.uploadImage(selectedFile);
+      }
+
+      adminSocketService.sendMessage(session.visitorId, inputMessage.trim(), image);
       setInputMessage('');
+      clearSelectedFile();
     } catch (error) {
       console.error('Error sending message:', error);
+      setUploadError(error.message || 'Failed to send. Try again.');
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleDeleteConversation = () => {
+    if (!session) return;
+    const ok = window.confirm(
+      'Delete this entire conversation? All messages and images will be permanently removed.'
+    );
+    if (!ok) return;
+
+    adminSocketService.deleteSession(session.visitorId);
+    if (onDeleted) onDeleted();
   };
 
   const formatTime = (timestamp) => {
@@ -104,6 +172,8 @@ const ChatArea = ({ session, onOpenSidebar }) => {
     );
   }
 
+  const isClosed = session.status === 'closed';
+
   return (
     <div className="flex-1 flex flex-col bg-white h-full">
       {/* Chat Header */}
@@ -143,13 +213,23 @@ const ChatArea = ({ session, onOpenSidebar }) => {
             </div>
           </div>
 
-          <button
-            onClick={closeSession}
-            className="p-1.5 md:p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-            title="Close conversation"
-          >
-            <X className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
-          </button>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={handleDeleteConversation}
+              className="p-1.5 md:p-2 hover:bg-red-50 rounded-lg transition-colors"
+              title="Delete conversation"
+              aria-label="Delete conversation"
+            >
+              <Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-500" />
+            </button>
+            <button
+              onClick={closeSession}
+              className="p-1.5 md:p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Close conversation"
+            >
+              <X className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -206,9 +286,27 @@ const ChatArea = ({ session, onOpenSidebar }) => {
                           : 'bg-white text-gray-900 border border-gray-200 rounded-tl-none shadow-sm'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap break-words">
-                        {message.content}
-                      </p>
+                      {message.imageUrl && (
+                        <a
+                          href={message.imageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block mb-1"
+                        >
+                          <img
+                            src={message.imageUrl}
+                            alt="Chat attachment"
+                            loading="lazy"
+                            className="rounded-lg max-h-64 w-auto max-w-full object-cover"
+                          />
+                        </a>
+                      )}
+
+                      {message.content && (
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {message.content}
+                        </p>
+                      )}
 
                       {/* Timestamp and Delivery Status */}
                       <div className={`flex items-center gap-1 mt-2 text-xs ${
@@ -218,7 +316,7 @@ const ChatArea = ({ session, onOpenSidebar }) => {
                       }`}>
                         <Clock className="w-3 h-3" />
                         {formatTime(message.createdAt)}
-                        {/* ✅ FIX: Show double checkmarks for delivered admin messages */}
+                        {/* Show double checkmarks for delivered admin messages */}
                         {message.sender === 'admin' && (
                           <div className="flex items-center ml-1">
                             <CheckCircle className="w-3 h-3" />
@@ -241,25 +339,66 @@ const ChatArea = ({ session, onOpenSidebar }) => {
         onSubmit={handleSendMessage}
         className="px-3 md:px-4 lg:px-6 py-3 md:py-4 bg-white border-t border-gray-200 flex-shrink-0"
       >
+        {/* Pending image preview */}
+        {previewUrl && (
+          <div className="mb-2 relative inline-block">
+            <img
+              src={previewUrl}
+              alt="Selected"
+              className="h-20 w-20 object-cover rounded-lg border border-gray-200"
+            />
+            <button
+              type="button"
+              onClick={clearSelectedFile}
+              disabled={isSending}
+              className="absolute -top-2 -right-2 bg-gray-800 text-white rounded-full p-0.5 hover:bg-gray-900"
+              aria-label="Remove image"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {uploadError && (
+          <p className="text-xs text-red-600 mb-2">{uploadError}</p>
+        )}
+
         <div className="flex gap-2 md:gap-3">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isSending || isClosed}
+            className="px-3 py-2 md:py-3 border border-gray-300 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+            aria-label="Attach image"
+            title="Attach image"
+          >
+            <ImagePlus className="w-5 h-5" />
+          </button>
           <input
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Type your response..."
-            disabled={isSending || session.status === 'closed'}
-            className="flex-1 px-3 py-2 md:px-4 md:py-3 border border-gray-300 rounded-xl text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+            disabled={isSending || isClosed}
+            className="flex-1 min-w-0 px-3 py-2 md:px-4 md:py-3 border border-gray-300 rounded-xl text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
           />
           <button
             type="submit"
-            disabled={!inputMessage.trim() || isSending || session.status === 'closed'}
-            className="px-4 md:px-6 py-2 md:py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium text-sm md:text-base"
+            disabled={(!inputMessage.trim() && !selectedFile) || isSending || isClosed}
+            className="px-4 md:px-6 py-2 md:py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium text-sm md:text-base flex-shrink-0"
           >
-            <Send className="w-4 h-4" />
+            {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             <span className="hidden sm:inline">Send</span>
           </button>
         </div>
-        {session.status === 'closed' && (
+        {isClosed && (
           <p className="text-xs text-gray-500 mt-2">
             This conversation is closed. Reopen it to send messages.
           </p>

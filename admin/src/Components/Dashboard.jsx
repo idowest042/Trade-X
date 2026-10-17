@@ -2,10 +2,14 @@ import React, { useEffect, useState, useRef } from 'react';
 import {
   Send, User, AlertCircle, CheckCircle, Clock, X, Menu,
   Wifi, WifiOff, RefreshCw, MessageSquare, Circle,
+  ImagePlus, Trash2, Loader2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import useAdminStore from '../Store/adminStore';
 import adminSocketService from '../Store/adminSocketService';
+
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmtTime = (ts) => {
@@ -31,7 +35,9 @@ const shortId = (id = '') => id.substring(8, 20);
 
 // ─── Session Item ─────────────────────────────────────────────────────────────
 function SessionItem({ session, isSelected, onClick }) {
-  const last = session.lastMessage?.content || 'No messages yet';
+  const last =
+    session.lastMessage?.content ||
+    (session.lastMessage?.imageUrl ? '📷 Photo' : 'No messages yet');
   const unread = session.unreadCount || 0;
 
   return (
@@ -108,9 +114,26 @@ function MessageBubble({ message, prevMessage }) {
                 ? 'bg-blue-600 text-white rounded-tr-none'
                 : 'bg-white text-gray-900 border border-gray-200 rounded-tl-none shadow-sm'
             }`}>
-              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
-                {message.content}
-              </p>
+              {message.imageUrl && (
+                <a
+                  href={message.imageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block mb-1"
+                >
+                  <img
+                    src={message.imageUrl}
+                    alt="Chat attachment"
+                    loading="lazy"
+                    className="rounded-lg max-h-64 w-auto max-w-full object-cover"
+                  />
+                </a>
+              )}
+              {message.content && (
+                <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                  {message.content}
+                </p>
+              )}
               <div className={`flex items-center gap-1 mt-1.5 text-[10px] ${isAdmin ? 'text-blue-200 justify-end' : 'text-gray-400'}`}>
                 <Clock className="w-2.5 h-2.5" />
                 {fmtTime(message.createdAt)}
@@ -130,11 +153,15 @@ function MessageBubble({ message, prevMessage }) {
 }
 
 // ─── Chat Area ────────────────────────────────────────────────────────────────
-function ChatArea({ session, onOpenSidebar }) {
-  const { messages, addMessage, markSessionAsRead } = useAdminStore();
-  const [input, setInput]       = useState('');
-  const [sending, setSending]   = useState(false);
-  const bottomRef               = useRef(null);
+function ChatArea({ session, onOpenSidebar, onDelete }) {
+  const { messages, markSessionAsRead } = useAdminStore();
+  const [input, setInput]               = useState('');
+  const [sending, setSending]           = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl]     = useState(null);
+  const [uploadError, setUploadError]   = useState('');
+  const bottomRef                       = useRef(null);
+  const fileInputRef                    = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -144,18 +171,74 @@ function ChatArea({ session, onOpenSidebar }) {
     if (session) markSessionAsRead(session._id);
   }, [session, messages.length, markSessionAsRead]);
 
+  // Clear any pending image when switching conversations
+  useEffect(() => {
+    clearSelectedFile();
+    setUploadError('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?._id]);
+
+  // Free the preview object URL when it changes/unmounts
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setUploadError('Only JPG, PNG, WEBP or GIF images are allowed.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > MAX_SIZE) {
+      setUploadError('Image must be under 5MB.');
+      e.target.value = '';
+      return;
+    }
+
+    setUploadError('');
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!input.trim() || !session || sending) return;
+    if ((!input.trim() && !selectedFile) || !session || sending) return;
     setSending(true);
+    setUploadError('');
     try {
-      adminSocketService.sendMessage(session.visitorId, input.trim());
+      let image = null;
+      if (selectedFile) {
+        image = await adminSocketService.uploadImage(selectedFile);
+      }
+      adminSocketService.sendMessage(session.visitorId, input.trim(), image);
       setInput('');
+      clearSelectedFile();
     } catch (err) {
       console.error('Send error:', err);
+      setUploadError(err.message || 'Failed to send. Try again.');
     } finally {
       setSending(false);
     }
+  };
+
+  const handleDelete = () => {
+    if (!session) return;
+    const ok = window.confirm(
+      'Delete this entire conversation? All messages and images will be permanently removed.'
+    );
+    if (!ok) return;
+    onDelete(session);
   };
 
   if (!session) {
@@ -214,11 +297,21 @@ function ChatArea({ session, onOpenSidebar }) {
             </div>
           </div>
         </div>
-        <button onClick={() => console.log('close', session._id)}
-          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-          title="Close conversation">
-          <X className="w-4 h-4 text-gray-500" />
-        </button>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            onClick={handleDelete}
+            className="p-1.5 hover:bg-red-50 rounded-lg transition-colors"
+            title="Delete conversation"
+            aria-label="Delete conversation"
+          >
+            <Trash2 className="w-4 h-4 text-red-500" />
+          </button>
+          <button onClick={() => console.log('close', session._id)}
+            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Close conversation">
+            <X className="w-4 h-4 text-gray-500" />
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
@@ -238,21 +331,64 @@ function ChatArea({ session, onOpenSidebar }) {
 
       {/* Input */}
       <form onSubmit={handleSend}
-        className="px-4 md:px-5 py-3.5 bg-white border-t border-gray-100 flex gap-2.5 flex-shrink-0">
-        <input
-          type="text"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder={isClosed ? 'Conversation is closed' : 'Type your response…'}
-          disabled={sending || isClosed}
-          className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
-        />
-        <button type="submit"
-          disabled={!input.trim() || sending || isClosed}
-          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2">
-          <Send className="w-4 h-4" />
-          <span className="hidden sm:inline">Send</span>
-        </button>
+        className="px-4 md:px-5 py-3.5 bg-white border-t border-gray-100 flex-shrink-0">
+        {/* Pending image preview */}
+        {previewUrl && (
+          <div className="mb-2 relative inline-block">
+            <img
+              src={previewUrl}
+              alt="Selected"
+              className="h-20 w-20 object-cover rounded-lg border border-gray-200"
+            />
+            <button
+              type="button"
+              onClick={clearSelectedFile}
+              disabled={sending}
+              className="absolute -top-2 -right-2 bg-gray-800 text-white rounded-full p-0.5 hover:bg-gray-900"
+              aria-label="Remove image"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {uploadError && (
+          <p className="text-xs text-red-600 mb-2">{uploadError}</p>
+        )}
+
+        <div className="flex gap-2.5">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={sending || isClosed}
+            className="px-3 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+            aria-label="Attach image"
+            title="Attach image"
+          >
+            <ImagePlus className="w-4 h-4" />
+          </button>
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder={isClosed ? 'Conversation is closed' : 'Type your response…'}
+            disabled={sending || isClosed}
+            className="flex-1 min-w-0 px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+          />
+          <button type="submit"
+            disabled={(!input.trim() && !selectedFile) || sending || isClosed}
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 flex-shrink-0">
+            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            <span className="hidden sm:inline">Send</span>
+          </button>
+        </div>
       </form>
       {isClosed && (
         <p className="text-center text-xs text-gray-400 pb-2 bg-white">
@@ -332,6 +468,13 @@ const Dashboard = () => {
   const [initializing,    setInitializing]    = useState(true);
   const [sidebarOpen,     setSidebarOpen]     = useState(false);
 
+  // The socket listeners below are created once, so they would only ever see
+  // the first (null) value of selectedSession. A ref always holds the latest.
+  const selectedRef = useRef(selectedSession);
+  useEffect(() => {
+    selectedRef.current = selectedSession;
+  }, [selectedSession]);
+
   useEffect(() => {
     initDashboard();
     return () => adminSocketService.disconnect();
@@ -367,7 +510,7 @@ const Dashboard = () => {
     socket.on('admin:messages', (loaded) => setMessages(loaded));
 
     socket.on('admin:newMessage', ({ sessionId, visitorId, message }) => {
-      if (selectedSession?.visitorId === visitorId) {
+      if (selectedRef.current?.visitorId === visitorId) {
         addMessage(message);
         markSessionAsRead(sessionId);
       }
@@ -376,11 +519,20 @@ const Dashboard = () => {
     });
 
     socket.on('admin:messageUpdate', ({ sessionId, visitorId, message }) => {
-      if (selectedSession?.visitorId === visitorId) addMessage(message);
+      if (selectedRef.current?.visitorId === visitorId) addMessage(message);
       updateSession(sessionId, { lastMessageAt: message.createdAt, lastMessage: message });
     });
 
-    socket.on('admin:messageSent', (message) => addMessage(message));
+  
+
+    // A conversation was deleted (by this admin or another admin tab)
+    socket.on('admin:sessionDeleted', ({ visitorId }) => {
+      if (selectedRef.current?.visitorId === visitorId) {
+        setSelectedSession(null);
+        setMessages([]);
+      }
+    });
+
     socket.on('chat:error', (err) => setConnectionError(err.message));
   };
 
@@ -389,7 +541,13 @@ const Dashboard = () => {
     adminSocketService.getMessages(session.visitorId);
     setSidebarOpen(false);
   };
-  
+
+  const handleDeleteSession = (session) => {
+    adminSocketService.deleteSession(session.visitorId);
+    setSelectedSession(null);
+    setMessages([]);
+  };
+
   const handleRefresh = () => {
     adminSocketService.getSessions();
     if (selectedSession) adminSocketService.getMessages(selectedSession.visitorId);
@@ -475,6 +633,7 @@ const Dashboard = () => {
           <ChatArea
             session={selectedSession}
             onOpenSidebar={() => setSidebarOpen(true)}
+            onDelete={handleDeleteSession}
           />
         </div>
       </div>

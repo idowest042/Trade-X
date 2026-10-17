@@ -150,7 +150,8 @@ const SessionList = ({ onSelectSession, onClose }) => {
                     {session.lastMessage.sender === 'admin' && (
                       <span className="text-blue-600 mr-1">You:</span>
                     )}
-                    {session.lastMessage.content}
+                    {session.lastMessage.content ||
+                      (session.lastMessage.imageUrl ? '📷 Photo' : '')}
                   </p>
                 </div>
               )}
