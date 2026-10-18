@@ -1,11 +1,34 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Copy, Check } from "lucide-react";
 import { PageHeader, StatusBadge, Table, ActionBtn, StatCard, fmt } from "../Components/AdminUI";
 import api from "../lib/api";
 
 const METHOD_LABELS = {
   usdt_trc20: "USDT TRC20", usdt_erc20: "USDT ERC20", usdt_bep20: "USDT BEP20",
   btc: "Bitcoin", eth: "Ethereum", sol: "Solana",
+};
+
+// Copies text, with a fallback for browsers/contexts where navigator.clipboard isn't available
+const copyText = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  }
 };
 
 export default function AdminWithdrawals() {
@@ -15,6 +38,7 @@ export default function AdminWithdrawals() {
   const [acting, setActing]           = useState(null);
   const [rejectModal, setRejectModal] = useState(null); // { id }
   const [rejectReason, setRejectReason] = useState("");
+  const [copiedId, setCopiedId]       = useState(null);
 
   useEffect(() => {
     api.get("/api/admin/withdrawals")
@@ -22,6 +46,18 @@ export default function AdminWithdrawals() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  const handleCopy = async (id, address) => {
+    if (!address) return;
+    const ok = await copyText(address);
+    if (ok) {
+      setCopiedId(id);
+      toast.success("Wallet address copied");
+      setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 1500);
+    } else {
+      toast.error("Could not copy. Select the address and copy it manually.");
+    }
+  };
 
   const handleApprove = async (id) => {
     setActing(id);
@@ -92,9 +128,24 @@ export default function AdminWithdrawals() {
             <td className="px-4 py-3.5 font-bold text-red-500 text-sm">-${Number(w.amount).toLocaleString()}</td>
             <td className="px-4 py-3.5 text-sm text-slate-600">{METHOD_LABELS[w.method] || w.method}</td>
             <td className="px-4 py-3.5">
-              <span className="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                {w.walletAddress?.slice(0, 16)}…
-              </span>
+              <div className="flex items-start gap-2 max-w-[260px]">
+                <span className="font-mono text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded break-all select-all">
+                  {w.walletAddress || "—"}
+                </span>
+                {w.walletAddress && (
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(w._id, w.walletAddress)}
+                    className="flex-shrink-0 p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition-colors"
+                    title="Copy address"
+                    aria-label="Copy wallet address"
+                  >
+                    {copiedId === w._id
+                      ? <Check className="w-3.5 h-3.5 text-green-600" />
+                      : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                )}
+              </div>
             </td>
             <td className="px-4 py-3.5 text-xs text-slate-400">{fmt(w.createdAt)}</td>
             <td className="px-4 py-3.5"><StatusBadge status={w.status} /></td>
