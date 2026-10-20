@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import useAuthStore  from "../../stores/useauthstore";
 import api           from "../../lib/api";
+import WithdrawalNotice from "./WithdrawalNotice";
 import { getSocket } from "../../stores/socket";
 
 const QUICK_ACTIONS = [
@@ -75,7 +76,7 @@ export default function DashboardHome() {
   return (
     <div className="max-w-6xl mx-auto space-y-6 font-sans">
 
-      {/* Header */}
+      {/* Header */}  <WithdrawalNotice />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">

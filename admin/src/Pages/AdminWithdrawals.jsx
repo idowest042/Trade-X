@@ -9,6 +9,16 @@ const METHOD_LABELS = {
   btc: "Bitcoin", eth: "Ethereum", sol: "Solana",
 };
 
+const MAX_REASON = 300;
+
+// Quick-fill reasons (editable after clicking)
+const REASON_PRESETS = [
+  { label: "KYC incomplete",     text: "Your identity verification (KYC) is incomplete or does not match your account details. Please complete verification and submit a new request." },
+  { label: "Invalid wallet",     text: "The wallet address or network provided is invalid. Please check the address and network, then submit a new request." },
+  { label: "Needs review",       text: "Your account requires additional review before this withdrawal can be processed. Please contact support." },
+  { label: "Over limit",         text: "The requested amount exceeds your current withdrawable limit. Please submit a smaller request." },
+];
+
 // Copies text, with a fallback for browsers/contexts where navigator.clipboard isn't available
 const copyText = async (text) => {
   try {
@@ -75,12 +85,20 @@ export default function AdminWithdrawals() {
 
   const handleReject = async () => {
     const { id } = rejectModal;
+    const reason = rejectReason.trim();
     setActing(id);
     const tid = toast.loading("Rejecting withdrawal…");
     try {
-      await api.put(`/api/withdrawals/${id}/reject`, { reason: rejectReason });
-      toast.success("Withdrawal rejected", { id: tid });
-      setWithdrawals(prev => prev.map(w => w._id === id ? { ...w, status: "rejected" } : w));
+      await api.put(`/api/withdrawals/${id}/reject`, { reason });
+      toast.success("Withdrawal rejected", {
+        id: tid,
+        description: "The client will see a notice on their dashboard.",
+      });
+      setWithdrawals(prev => prev.map(w =>
+        w._id === id
+          ? { ...w, status: "rejected", rejectionReason: reason || "No reason provided." }
+          : w
+      ));
       setRejectModal(null);
       setRejectReason("");
     } catch (err) {
@@ -148,7 +166,17 @@ export default function AdminWithdrawals() {
               </div>
             </td>
             <td className="px-4 py-3.5 text-xs text-slate-400">{fmt(w.createdAt)}</td>
-            <td className="px-4 py-3.5"><StatusBadge status={w.status} /></td>
+            <td className="px-4 py-3.5">
+              <StatusBadge status={w.status} />
+              {w.status === "rejected" && w.rejectionReason && (
+                <p
+                  className="text-[11px] text-slate-400 mt-1 max-w-[180px] truncate"
+                  title={w.rejectionReason}
+                >
+                  {w.rejectionReason}
+                </p>
+              )}
+            </td>
             <td className="px-4 py-3.5">
               {w.status === "pending" ? (
                 <div className="flex gap-1.5">
@@ -164,11 +192,41 @@ export default function AdminWithdrawals() {
       {/* Reject modal */}
       {rejectModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl space-y-4">
-            <p className="font-bold text-slate-800">Reject Withdrawal</p>
-            <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} rows={3}
-              placeholder="Reason for rejection (optional)…"
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-slate-50" />
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div>
+              <p className="font-bold text-slate-800">Reject Withdrawal</p>
+              <p className="text-xs text-slate-500 mt-1">
+                The client sees this message in a popup on their dashboard. Leave it empty to
+                reject without a reason.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {REASON_PRESETS.map(p => (
+                <button
+                  key={p.label}
+                  type="button"
+                  onClick={() => setRejectReason(p.text)}
+                  className="px-2.5 py-1 rounded-full border border-slate-200 text-xs font-medium text-slate-600 hover:border-blue-400 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            <div>
+              <textarea
+                value={rejectReason}
+                onChange={e => setRejectReason(e.target.value.slice(0, MAX_REASON))}
+                rows={4}
+                placeholder="Reason for rejection (optional)…"
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-slate-50"
+              />
+              <p className="text-[11px] text-slate-400 text-right mt-1">
+                {rejectReason.length}/{MAX_REASON}
+              </p>
+            </div>
+
             <div className="flex gap-2 justify-end">
               <ActionBtn label="Cancel" color="slate" onClick={() => setRejectModal(null)} />
               <ActionBtn label="Confirm Reject" color="red" onClick={handleReject} disabled={!!acting} />

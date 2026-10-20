@@ -4,7 +4,14 @@ import Kyc from "../Models/Kyc.js";
 import Transaction from "../Models/Transaction.js";
 
 const MAX_WITHDRAWAL = 10000;
+const MAX_REASON_LENGTH = 300;
 const VALID_METHODS  = ["usdt_trc20", "usdt_erc20", "usdt_bep20", "btc", "eth", "sol"];
+
+// Push a realtime event to the user's open sessions (room set up in chatHandler)
+const notifyUser = (req, userId, event, payload) => {
+  const io = req.app.get("io");
+  if (io) io.to(`user:${userId}`).emit(event, payload);
+};
 
 // ─── POST /api/withdrawals/request ───────────────────────────────────────────
 export const requestWithdrawal = async (req, res) => {
@@ -97,7 +104,7 @@ export const getMyWithdrawals = async (req, res) => {
   }
 };
 
-// ─── PUT /api/withdrawals/:id/approve  (admin — wired in admin panel phase) ───
+// ─── PUT /api/withdrawals/:id/approve  (admin) ────────────────────────────────
 export const approveWithdrawal = async (req, res) => {
   try {
     const withdrawal = await Withdrawal.findById(req.params.id);
@@ -120,14 +127,32 @@ export const approveWithdrawal = async (req, res) => {
     }
 
     // Deduct balance NOW at approval time (Option B)
-    await User.findByIdAndUpdate(withdrawal.userId, {
-      $inc: { balance: -withdrawal.amount },
-    });
+    const updatedUser = await User.findByIdAndUpdate(
+      withdrawal.userId,
+      { $inc: { balance: -withdrawal.amount } },
+      { new: true }
+    );
 
     withdrawal.status     = "approved";
     withdrawal.reviewedBy = req.user._id;
     withdrawal.reviewedAt = new Date();
     await withdrawal.save();
+
+    // Keep the central ledger in sync (it stayed "pending" before)
+    await Transaction.findOneAndUpdate(
+      { referenceId: withdrawal._id, type: "withdrawal" },
+      {
+        status: "approved",
+        description: `Withdrawal approved — $${withdrawal.amount} sent via ${withdrawal.method.toUpperCase()}`,
+      }
+    );
+
+    // Live updates for the user's open pages
+    if (updatedUser) notifyUser(req, withdrawal.userId, "balance:update", updatedUser.balance);
+    notifyUser(req, withdrawal.userId, "withdrawal:update", {
+      _id: withdrawal._id,
+      status: "approved",
+    });
 
     return res.status(200).json({
       message: `Withdrawal of $${withdrawal.amount} approved. User balance deducted.`,
@@ -139,7 +164,7 @@ export const approveWithdrawal = async (req, res) => {
   }
 };
 
-// ─── PUT /api/withdrawals/:id/reject  (admin — wired in admin panel phase) ────
+// ─── PUT /api/withdrawals/:id/reject  (admin) ─────────────────────────────────
 export const rejectWithdrawal = async (req, res) => {
   try {
     const { reason } = req.body;
@@ -151,12 +176,31 @@ export const rejectWithdrawal = async (req, res) => {
       return res.status(400).json({ message: "Only pending withdrawals can be rejected." });
     }
 
+    const cleanReason =
+      typeof reason === "string" ? reason.trim().slice(0, MAX_REASON_LENGTH) : "";
+
     // No balance was deducted, so nothing to reverse
     withdrawal.status          = "rejected";
-    withdrawal.rejectionReason = reason || "No reason provided.";
+    withdrawal.rejectionReason = cleanReason || "No reason provided.";
     withdrawal.reviewedBy      = req.user._id;
     withdrawal.reviewedAt      = new Date();
     await withdrawal.save();
+
+    // Keep the central ledger in sync
+    await Transaction.findOneAndUpdate(
+      { referenceId: withdrawal._id, type: "withdrawal" },
+      {
+        status: "rejected",
+        description: `Withdrawal rejected — ${withdrawal.rejectionReason}`,
+      }
+    );
+
+    // Tell the client right away (popup appears if they're online;
+    // otherwise it appears the next time they open the dashboard)
+    notifyUser(req, withdrawal.userId, "withdrawal:update", {
+      _id: withdrawal._id,
+      status: "rejected",
+    });
 
     return res.status(200).json({ message: "Withdrawal rejected.", withdrawal });
   } catch (err) {

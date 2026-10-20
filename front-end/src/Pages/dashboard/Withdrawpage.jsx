@@ -45,28 +45,44 @@ function StatusBadge({ status }) {
 
 function WithdrawalRow({ w }) {
   const method = CRYPTO_METHODS.find(m => m.id === w.method);
+  const reason =
+    w.status === "rejected" && w.rejectionReason && w.rejectionReason !== "No reason provided."
+      ? w.rejectionReason
+      : null;
+
   return (
-    <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 gap-3">
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="w-8 h-8 rounded-md border border-slate-200 flex items-center justify-center flex-shrink-0">
-          <ArrowUpFromLine size={13} className="text-slate-500" />
+    <div className="py-3 border-b border-slate-100 last:border-0">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-md border border-slate-200 flex items-center justify-center flex-shrink-0">
+            <ArrowUpFromLine size={13} className="text-slate-500" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-slate-800 truncate">
+              {method?.label || w.method}
+              {method?.tag && <span className="text-slate-400 font-normal"> · {method.tag}</span>}
+            </p>
+            <p className="text-xs text-slate-400 mt-0.5 truncate max-w-[150px] font-mono">
+              {w.walletAddress}
+            </p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-slate-800 truncate">
-            {method?.label || w.method}
-            {method?.tag && <span className="text-slate-400 font-normal"> · {method.tag}</span>}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <p className="text-sm font-semibold text-slate-800 tabular-nums">
+            ${Number(w.amount).toLocaleString()}
           </p>
-          <p className="text-xs text-slate-400 mt-0.5 truncate max-w-[150px] font-mono">
-            {w.walletAddress}
-          </p>
+          <StatusBadge status={w.status} />
         </div>
       </div>
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <p className="text-sm font-semibold text-slate-800 tabular-nums">
-          ${Number(w.amount).toLocaleString()}
-        </p>
-        <StatusBadge status={w.status} />
-      </div>
+
+      {w.status === "rejected" && (
+        <div className="mt-2 ml-11 border-l-2 border-rose-300 bg-rose-50/60 rounded-r px-3 py-2">
+          <p className="text-[11px] font-medium text-rose-700 uppercase tracking-wide mb-0.5">Reason</p>
+          <p className="text-xs text-slate-600 leading-relaxed break-words">
+            {reason || "No specific reason was recorded. Please contact support for details."}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
