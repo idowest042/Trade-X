@@ -356,7 +356,7 @@ export default function WithdrawPage() {
                   ["Amount",  `$${parsedAmount.toLocaleString()}`],
                   ["Method",  `${CRYPTO_METHODS.find(m => m.id === form.method)?.label} (${CRYPTO_METHODS.find(m => m.id === form.method)?.tag})`],
                   ["Address", `${form.walletAddress.slice(0, 12)}…${form.walletAddress.slice(-6)}`],
-                  ["Status",  "Pending admin review"],
+                  ["Status",  "Pending review"],
                 ].map(([k, v]) => (
                   <div key={k} className="flex justify-between text-xs">
                     <span className="text-slate-500">{k}</span>
